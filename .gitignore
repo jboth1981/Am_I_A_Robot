@@ -1,0 +1,36 @@
+# Environment variables
+.env
+.env.local
+.env.production
+
+# SSL Certificates and private keys
+certs/
+*.pem
+*.key
+*.crt
+
+# Let's Encrypt / Certbot
+certbot/
+acme/
+
+# Docker volumes and data
+vhost.d/
+html/
+
+# Node modules (if any)
+node_modules/
+
+# Python cache
+__pycache__/
+*.pyc
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log 
