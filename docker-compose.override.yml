@@ -1,9 +1,0 @@
-# This override disables the nginx-proxy-acme (Let's Encrypt companion) for local development.
-# Use this file to run with self-signed certificates in certs/.
-
-services:
-  nginx-proxy-acme:
-    # Disable the ACME companion for local development
-    entrypoint: ["/bin/true"]
-    command: ["/bin/true"]
-    # Optionally, you can also set 'deploy: { replicas: 0 }' if using swarm 

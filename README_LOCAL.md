@@ -2,14 +2,17 @@
 
 ## Switching Between Local and Production
 
-This project uses a `.env` file to make switching between local (self-signed certs) and production (Let's Encrypt) seamless.
+This project uses separate Docker Compose files for local development and production deployment.
 
 - **Local development:**
-  - Set `ENV=local` in your `.env` file (see `.env.example`).
-  - By default, running `docker-compose up --build` will use self-signed certificates in the `certs/` directory and will NOT run the Let's Encrypt companion.
+  - Set `ENV=local` in your `.env` file.
+  - Run `docker-compose -f docker-compose.local.yml up --build`.
+  - Uses `nginx:alpine` with custom config and self-signed certificates.
+  - No ACME companion (not needed for local development).
 - **Production:**
   - Set `ENV=production` in your `.env` file.
-  - Running `docker-compose --profile production up --build` will enable the Let's Encrypt companion for real SSL certificates (requires public DNS and ports).
+  - Run `docker-compose -f docker-compose.production.yml --profile production up --build`.
+  - Uses `jwilder/nginx-proxy` with the ACME companion for real SSL certificates.
 
 ---
 

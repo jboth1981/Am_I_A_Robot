@@ -36,10 +36,10 @@ echo "DEFAULT_EMAIL=your-email@example.com" >> .env
 #### 3. Deploy
 ```bash
 # Start with production profile (enables Let's Encrypt)
-docker-compose --profile production up --build -d
+docker-compose -f docker-compose.production.yml --profile production up --build -d
 
 # Check logs
-docker-compose logs -f
+docker-compose -f docker-compose.production.yml logs -f
 ```
 
 ### Option 2: Manual Transfer
@@ -49,7 +49,7 @@ docker-compose logs -f
 # Copy files (excluding sensitive ones)
 scp -r backend/ user@your-server:/path/to/app/
 scp -r frontend/ user@your-server:/path/to/app/
-scp docker-compose.yml user@your-server:/path/to/app/
+scp docker-compose.production.yml user@your-server:/path/to/app/
 scp nginx/default.conf user@your-server:/path/to/app/nginx/
 scp README_LOCAL.md user@your-server:/path/to/app/
 ```
@@ -60,7 +60,7 @@ scp README_LOCAL.md user@your-server:/path/to/app/
 echo "ENV=production" > .env
 
 # Start deployment
-docker-compose --profile production up --build -d
+docker-compose -f docker-compose.production.yml --profile production up --build -d
 ```
 
 ## Production Checklist
@@ -68,7 +68,7 @@ docker-compose --profile production up --build -d
 - [ ] DNS records point to your server
 - [ ] Ports 80 and 443 are open
 - [ ] `.env` file contains `ENV=production`
-- [ ] Running with `--profile production`
+- [ ] Running with `-f docker-compose.production.yml --profile production`
 - [ ] Let's Encrypt certificates are generated
 - [ ] Frontend accessible at https://amiarobot.ca
 - [ ] Backend accessible at https://api.amiarobot.ca
@@ -78,19 +78,19 @@ docker-compose --profile production up --build -d
 ### Let's Encrypt Issues
 ```bash
 # Check ACME logs
-docker-compose logs nginx-proxy-acme
+docker-compose -f docker-compose.production.yml logs nginx-proxy-acme
 
 # Restart ACME service
-docker-compose restart nginx-proxy-acme
+docker-compose -f docker-compose.production.yml restart nginx-proxy-acme
 ```
 
 ### Certificate Issues
 ```bash
 # Check certificate status
-docker-compose exec nginx-proxy ls -la /etc/nginx/certs/
+docker-compose -f docker-compose.production.yml exec nginx-proxy ls -la /etc/nginx/certs/
 
 # Force certificate renewal
-docker-compose exec nginx-proxy-acme acme.sh --renew-all
+docker-compose -f docker-compose.production.yml exec nginx-proxy-acme acme.sh --renew-all
 ```
 
 ## Security Notes
@@ -105,10 +105,10 @@ docker-compose exec nginx-proxy-acme acme.sh --renew-all
 
 ```bash
 # Check service status
-docker-compose ps
+docker-compose -f docker-compose.production.yml ps
 
 # View logs
-docker-compose logs -f
+docker-compose -f docker-compose.production.yml logs -f
 
 # Monitor resource usage
 docker stats
