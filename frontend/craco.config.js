@@ -1,12 +1,25 @@
 module.exports = {
   webpack: {
-    configure: (webpackConfig) => {
+    configure: (webpackConfig, { env, paths }) => {
+      // Enable more detailed webpack logging
+      if (env === 'development') {
+        webpackConfig.stats = 'verbose';
+      }
       // Force webpack to use polling for file watching
       webpackConfig.watchOptions = {
-        poll: 2000, // Poll every 10 seconds
+        poll: 2000, // Poll every 2 seconds
         aggregateTimeout: 2000, // Wait 2 seconds after change before rebuilding
         ignored: /node_modules/
       };
+      
+      // Fix NODE_ENV conflicts by ensuring consistent environment
+      const DefinePlugin = webpackConfig.plugins.find(
+        plugin => plugin.constructor.name === 'DefinePlugin'
+      );
+      if (DefinePlugin) {
+        DefinePlugin.definitions['process.env.NODE_ENV'] = JSON.stringify(process.env.NODE_ENV || 'development');
+      }
+      
       return webpackConfig;
     }
   },
@@ -26,7 +39,7 @@ module.exports = {
       paths: ['src/**/*'],
       options: {
         usePolling: true,
-        interval: 10000
+        interval: 2000
       }
     }
   }
