@@ -200,6 +200,17 @@ body {
   letter-spacing: normal;
 }
 
+.binary-input.processing {
+  background-color: #f8f9fa;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.binary-input.processing::placeholder {
+  color: #6c757d;
+  font-style: italic;
+}
+
 .input-hint {
   margin-top: 10px;
   font-size: 0.9rem;

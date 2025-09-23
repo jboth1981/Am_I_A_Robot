@@ -1,0 +1,23 @@
+# This file is for the benefit of the AI agent coding assistant.
+
+Agent Instructions:
+
+This project is being run locally on a windows machine. 
+
+There is a production version also which is hosted on DigitalOcean droplet.
+
+I'd like to keep both versions aligned as much as possible.
+
+Commands should be powershell 7 compatible.
+
+Docker Desktop is running.
+
+The etc/hosts file is already set up to include amiarobot.ca as a local domain.
+
+The project root directory is "C:\Users\jorda\coding_projects\Am_I_A_Robot".
+
+Please give the full path of any commands that require user to be in a specific directory.
+
+Please give commands one line at a time (instead of in a block), to make running them easier for me.
+
+This project is being tracked with Git and uploaded to Github.
