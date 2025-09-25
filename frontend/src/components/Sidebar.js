@@ -1,9 +1,10 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 
 const Sidebar = ({ currentPage, onPageChange, onAuthAction }) => {
   const { user, isGuest, logout } = useAuth();
+  const navigate = useNavigate();
 
   const menuItems = [
     { id: 'play', label: 'Play', path: '/play' },
@@ -16,6 +17,10 @@ const Sidebar = ({ currentPage, onPageChange, onAuthAction }) => {
 
   const handleLogout = () => {
     logout();
+  };
+
+  const handleAuthClick = (mode) => {
+    navigate(`/auth?mode=${mode}`);
   };
 
   return (
