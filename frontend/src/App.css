@@ -1618,6 +1618,24 @@ body {
   color: #999;
 }
 
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+  .single-digit-input {
+    /* Prevent zoom on iOS when focusing input */
+    font-size: max(16px, 2.5rem);
+    /* Prevent mobile keyboard from changing the input type */
+    -webkit-appearance: none;
+    -moz-appearance: textfield;
+  }
+  
+  /* Ensure numeric keyboard stays active */
+  .single-digit-input:focus {
+    outline: none;
+    border-color: var(--secondary-blue);
+    box-shadow: 0 0 0 3px rgba(110, 155, 161, 0.1);
+  }
+}
+
 .prediction-display {
   width: 80px;
   height: 80px;

@@ -73,12 +73,15 @@ const GamePage = () => {
         setPrediction('?');
       } finally {
         setIsTyping(false);
-        // Ensure input stays focused for next digit
-        setTimeout(() => {
-          if (inputRef.current && !isCompleted) {
-            inputRef.current.focus();
-          }
-        }, 10);
+        // Keep focus without setTimeout to avoid mobile keyboard reset
+        if (inputRef.current && !isCompleted) {
+          // Use requestAnimationFrame instead of setTimeout for smoother mobile experience
+          requestAnimationFrame(() => {
+            if (inputRef.current && !isCompleted) {
+              inputRef.current.focus();
+            }
+          });
+        }
       }
     }
   };
@@ -207,12 +210,12 @@ const GamePage = () => {
     setShowMethodDropdown(false);
     setHidePredictions(false); // Reset hide predictions checkbox
     initialPredictionMade.current = false; // Reset the ref so initial prediction will be made again
-    // Focus the input after reset
-    setTimeout(() => {
+    // Focus the input after reset using requestAnimationFrame for better mobile support
+    requestAnimationFrame(() => {
       if (inputRef.current) {
         inputRef.current.focus();
       }
-    }, 100);
+    });
     // Initial prediction will be triggered automatically by useEffect
   };
 
@@ -248,7 +251,9 @@ const GamePage = () => {
                 <label>User Entry</label>
                 <input
                   ref={inputRef}
-                  type="text"
+                  type="tel"
+                  inputMode="numeric"
+                  pattern="[01]"
                   value=""
                   onChange={handleInputChange}
                   onKeyDown={handleInputKeyDown}
