@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './contexts/AuthContext';
-import { AuthWrapper } from './components/AuthWrapper';
 import { PasswordResetForm } from './components/PasswordResetForm';
-import MainApp from './MainApp';
+import MainLayout from './layouts/MainLayout';
+import HomePage from './pages/HomePage';
+import GamePage from './pages/GamePage';
+import AboutPage from './pages/AboutPage';
+import AuthPage from './pages/AuthPage';
 
-function App() {
+// Component that handles auth logic and routing
+function AppContent() {
   const { loading, canAccessApp } = useAuth();
   const [resetToken, setResetToken] = useState(null);
   const [showResetForm, setShowResetForm] = useState(false);
@@ -39,15 +44,17 @@ function App() {
         justifyContent: 'center', 
         alignItems: 'center', 
         minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+        background: 'var(--white)'
       }}>
         <div style={{ 
-          background: 'rgba(255, 255, 255, 0.95)', 
+          background: 'var(--card-bg)', 
           padding: '40px', 
-          borderRadius: '12px',
-          textAlign: 'center'
+          borderRadius: '8px',
+          textAlign: 'center',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+          border: '1px solid #f0f0f0'
         }}>
-          <div style={{ fontSize: '1.2rem', color: '#7f8c8d' }}>
+          <div style={{ fontSize: '1.2rem', color: 'var(--text-secondary)' }}>
             Loading...
           </div>
         </div>
@@ -67,9 +74,60 @@ function App() {
   }
 
   return (
-    <>
-      {canAccessApp ? <MainApp /> : <AuthWrapper />}
-    </>
+    <Routes>
+      {/* Public routes */}
+      <Route 
+        path="/" 
+        element={
+          <MainLayout>
+            {canAccessApp ? <Navigate to="/play" replace /> : <HomePage />}
+          </MainLayout>
+        } 
+      />
+      
+      {/* Auth route - only show if not authenticated */}
+      <Route 
+        path="/auth" 
+        element={
+          canAccessApp ? <Navigate to="/play" replace /> : (
+            <MainLayout>
+              <AuthPage />
+            </MainLayout>
+          )
+        } 
+      />
+      
+      {/* Protected/Public routes */}
+      <Route 
+        path="/play" 
+        element={
+          <MainLayout>
+            <GamePage />
+          </MainLayout>
+        } 
+      />
+      
+      <Route 
+        path="/about" 
+        element={
+          <MainLayout>
+            <AboutPage />
+          </MainLayout>
+        } 
+      />
+      
+      {/* Catch all route - redirect to home */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+// Main App component that provides Router context
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
   );
 }
 

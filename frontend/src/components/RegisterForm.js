@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import './AuthForm.css';
 
-export const RegisterForm = ({ onSwitchToLogin, onPlayAsGuest }) => {
+export const RegisterForm = ({ onSwitchToLogin, onPlayAsGuest, onBackToLanding }) => {
   const [formData, setFormData] = useState({
     username: '',
     email: '',
@@ -64,8 +64,7 @@ export const RegisterForm = ({ onSwitchToLogin, onPlayAsGuest }) => {
   return (
     <div className="auth-form-container">
       <div className="auth-form-card">
-        <h2 className="auth-form-title">Join the Test</h2>
-        <p className="auth-form-subtitle">Create an account to start your robot detection journey</p>
+        <h2 className="auth-form-title">Create Your Account</h2>
         
         {(error || validationError) && (
           <div className="auth-error">
@@ -152,28 +151,16 @@ export const RegisterForm = ({ onSwitchToLogin, onPlayAsGuest }) => {
         </form>
         
         <div className="auth-switch">
-          <p>
-            Already have an account?{' '}
-            <button
-              type="button"
-              onClick={onSwitchToLogin}
-              className="auth-switch-btn"
-              disabled={isLoading}
-            >
-              Sign in
-            </button>
-          </p>
           <div className="guest-option">
             <p>Or</p>
             <button
               type="button"
               onClick={onPlayAsGuest}
-              className="guest-btn"
+              className="guest-btn auth-submit-btn"
               disabled={isLoading}
             >
-              🎮 Play as Guest
+              Play as Guest
             </button>
-            <p className="guest-note">Play without an account (no stats saved)</p>
           </div>
         </div>
       </div>

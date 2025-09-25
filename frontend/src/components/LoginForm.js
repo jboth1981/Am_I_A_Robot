@@ -3,7 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { authService } from '../services/authService';
 import './AuthForm.css';
 
-export const LoginForm = ({ onSwitchToRegister, onPlayAsGuest }) => {
+export const LoginForm = ({ onSwitchToRegister, onPlayAsGuest, onBackToLanding }) => {
   const [formData, setFormData] = useState({
     username: '',
     password: ''
@@ -112,8 +112,7 @@ export const LoginForm = ({ onSwitchToRegister, onPlayAsGuest }) => {
   return (
     <div className="auth-form-container">
       <div className="auth-form-card">
-        <h2 className="auth-form-title">Welcome Back</h2>
-        <p className="auth-form-subtitle">Sign in to continue your robot test!</p>
+        <h2 className="auth-form-title">Log In</h2>
         
         {error && (
           <div className="auth-error">
@@ -154,6 +153,17 @@ export const LoginForm = ({ onSwitchToRegister, onPlayAsGuest }) => {
               required
               disabled={isLoading}
             />
+            <div style={{ marginTop: '4px', textAlign: 'right' }}>
+              <button
+                type="button"
+                onClick={() => setShowForgotPassword(true)}
+                className="auth-switch-btn"
+                disabled={isLoading}
+                style={{ fontSize: '0.8rem', padding: '0' }}
+              >
+                Forgot Password?
+              </button>
+            </div>
           </div>
           
           <button
@@ -161,43 +171,21 @@ export const LoginForm = ({ onSwitchToRegister, onPlayAsGuest }) => {
             className="auth-submit-btn"
             disabled={isLoading}
           >
-            {isLoading ? 'Signing In...' : 'Sign In'}
+            {isLoading ? 'Logging In...' : 'Log In'}
           </button>
         </form>
         
         <div className="auth-switch">
-          <p>
-            <button
-              type="button"
-              onClick={() => setShowForgotPassword(true)}
-              className="auth-switch-btn"
-              disabled={isLoading}
-            >
-              Forgot Password?
-            </button>
-          </p>
-          <p>
-            Don't have an account?{' '}
-            <button
-              type="button"
-              onClick={onSwitchToRegister}
-              className="auth-switch-btn"
-              disabled={isLoading}
-            >
-              Sign up
-            </button>
-          </p>
           <div className="guest-option">
             <p>Or</p>
             <button
               type="button"
               onClick={onPlayAsGuest}
-              className="guest-btn"
+              className="guest-btn auth-submit-btn"
               disabled={isLoading}
             >
-              🎮 Play as Guest
+              Play as Guest
             </button>
-            <p className="guest-note">Play without an account (no stats saved)</p>
           </div>
         </div>
       </div>

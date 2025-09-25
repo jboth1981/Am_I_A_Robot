@@ -4,8 +4,8 @@ import { LoginForm } from './LoginForm';
 import { RegisterForm } from './RegisterForm';
 import './AuthForm.css';
 
-export const AuthWrapper = ({ children }) => {
-  const [isLoginMode, setIsLoginMode] = useState(true);
+export const AuthWrapper = ({ children, onBackToLanding, defaultMode = 'login' }) => {
+  const [isLoginMode, setIsLoginMode] = useState(defaultMode === 'login');
   const { loading, playAsGuest } = useAuth();
 
   if (loading) {
@@ -25,9 +25,17 @@ export const AuthWrapper = ({ children }) => {
   return (
     <>
       {isLoginMode ? (
-        <LoginForm onSwitchToRegister={() => setIsLoginMode(false)} onPlayAsGuest={playAsGuest} />
+        <LoginForm 
+          onSwitchToRegister={() => setIsLoginMode(false)} 
+          onPlayAsGuest={playAsGuest}
+          onBackToLanding={onBackToLanding}
+        />
       ) : (
-        <RegisterForm onSwitchToLogin={() => setIsLoginMode(true)} onPlayAsGuest={playAsGuest} />
+        <RegisterForm 
+          onSwitchToLogin={() => setIsLoginMode(true)} 
+          onPlayAsGuest={playAsGuest}
+          onBackToLanding={onBackToLanding}
+        />
       )}
     </>
   );

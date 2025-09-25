@@ -45,7 +45,6 @@ def predict_frequency(history: str) -> str:
     count_1 = history.count("1")
     
     prediction = "1" if count_1 > count_0 else "0"
-    print(f"DEBUG: Frequency analysis - 0s={count_0}, 1s={count_1}, prediction={prediction}")
     
     return prediction
 
@@ -239,10 +238,10 @@ def reset_password(reset_data: PasswordReset, db: Session = Depends(get_db)):
     
     return {"message": "Password reset successfully"}
 
-# Your existing prediction endpoint (unchanged)
+# Optimized prediction endpoint - no database dependencies
 @app.post("/predict/")
 def predict_next(data: InputData):
-    """Predict the next digit in the sequence"""
+    """Fast prediction endpoint - no database or auth dependencies"""
     history = data.history
     method = data.method
     
@@ -254,7 +253,7 @@ def predict_next(data: InputData):
         # Default to frequency method
         prediction = predict_frequency(history)
     
-    print(f"DEBUG: Returning prediction='{prediction}'")
+    # Removed debug print to improve performance
     return {"prediction": prediction}
 
 # Submission endpoints
