@@ -25,11 +25,17 @@ class User(Base):
     
     def verify_password(self, password: str) -> bool:
         """Verify a password against the stored hash"""
+        # bcrypt has a 72-byte limit, so truncate if necessary
+        if len(password.encode('utf-8')) > 72:
+            password = password[:72]
         return pwd_context.verify(password, self.hashed_password)
     
     @staticmethod
     def hash_password(password: str) -> str:
         """Hash a password for storage"""
+        # bcrypt has a 72-byte limit, so truncate if necessary
+        if len(password.encode('utf-8')) > 72:
+            password = password[:72]
         return pwd_context.hash(password)
 
 class PasswordResetToken(Base):

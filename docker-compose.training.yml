@@ -1,0 +1,89 @@
+# Docker Compose for Transformer Training
+# This sets up a training environment that can access your database
+
+services:
+  transformer-training:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.training
+    container_name: transformer_training
+    volumes:
+      # Mount the backend directory for code changes
+      - ./backend:/app
+      # Mount a models directory for saving trained models
+      - ./models:/app/models
+      # Mount a data directory for training data exports
+      - ./training_data:/app/data
+    environment:
+      # Database connection (connects to your existing database)
+      - DATABASE_URL=postgresql://robot_user:local_password@database:5432/am_i_a_robot_local
+      # Python settings
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+    depends_on:
+      - database
+    networks:
+      - web
+    # Resource limits for training
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
+    # Don't start automatically - run manually when needed
+    profiles:
+      - training
+
+  # GPU version (requires nvidia-docker)
+  transformer-training-gpu:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.training-gpu
+    container_name: transformer_training_gpu
+    volumes:
+      - ./backend:/app
+      - ./models:/app/models
+      - ./training_data:/app/data
+    environment:
+      - DATABASE_URL=postgresql://robot_user:local_password@database:5432/am_i_a_robot_local
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+      - CUDA_VISIBLE_DEVICES=0
+    depends_on:
+      - database
+    networks:
+      - web
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    profiles:
+      - training-gpu
+
+  # Your existing database service (referenced from main compose file)
+  database:
+    image: postgres:15-alpine
+    container_name: postgres_local
+    environment:
+      POSTGRES_DB: am_i_a_robot_local
+      POSTGRES_USER: robot_user
+      POSTGRES_PASSWORD: local_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_local_data:/var/lib/postgresql/data
+      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - web
+    restart: unless-stopped
+
+networks:
+  web:
+    driver: bridge
+
+volumes:
+  postgres_local_data:

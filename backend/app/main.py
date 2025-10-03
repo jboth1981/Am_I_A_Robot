@@ -34,7 +34,8 @@ app.add_middleware(
 # Existing prediction models and functions (unchanged)
 class InputData(BaseModel):
     history: str  # e.g., "01101"
-    method: str = "frequency"  # "frequency" or "pattern"
+    method: str = "frequency"  # "frequency", "pattern", or "transformer"
+    temperature: float = 1.0  # For transformer sampling
 
 def predict_frequency(history: str) -> str:
     """Simple frequency-based prediction: predict most frequent digit"""
@@ -238,14 +239,32 @@ def reset_password(reset_data: PasswordReset, db: Session = Depends(get_db)):
     
     return {"message": "Password reset successfully"}
 
+# Initialize transformer service (will gracefully handle missing dependencies)
+try:
+    from app.transformer_integration import predict_enhanced
+    TRANSFORMER_AVAILABLE = True
+except ImportError:
+    TRANSFORMER_AVAILABLE = False
+    print("Warning: Transformer dependencies not available. Install torch to use transformer predictions.")
+
 # Optimized prediction endpoint - no database dependencies
 @app.post("/predict/")
 def predict_next(data: InputData):
-    """Fast prediction endpoint - no database or auth dependencies"""
+    """Fast prediction endpoint with transformer support"""
     history = data.history
     method = data.method
+    temperature = data.temperature
     
-    if method == "frequency":
+    if method == "transformer" and TRANSFORMER_AVAILABLE:
+        # Use enhanced prediction with transformer support
+        result = predict_enhanced(history, method, temperature)
+        return {
+            "prediction": result["prediction"],
+            "method": result["method"],
+            "confidence": result["confidence"],
+            "fallback": result.get("fallback", False)
+        }
+    elif method == "frequency":
         prediction = predict_frequency(history)
     elif method == "pattern":
         prediction = predict_pattern(history)
@@ -253,7 +272,6 @@ def predict_next(data: InputData):
         # Default to frequency method
         prediction = predict_frequency(history)
     
-    # Removed debug print to improve performance
     return {"prediction": prediction}
 
 # Submission endpoints

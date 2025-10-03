@@ -130,13 +130,24 @@ Am_I_A_Robot/
 │   ├── src/                     # React source code
 │   └── package.json             # Uses CRACO instead of react-scripts
 ├── backend/
-│   └── app/                     # FastAPI application
+│   ├── app/                     # FastAPI application
+│   ├── requirements.txt         # Python dependencies (bcrypt pinned to 4.3.0)
+│   └── Dockerfile               # Backend container configuration
 ├── nginx/
 │   └── default.conf             # nginx with WebSocket proxy
 ├── certs/
 │   ├── amiarobot.ca/           # Frontend certificates
 │   └── api.amiarobot.ca/       # API certificates
-└── docker-compose.local.yml    # Local development configuration
+├── shared_model/               # Shared ML model components
+├── training/                   # Training documentation & configuration
+├── training_data/              # Training data storage
+├── training_scripts/           # Training wrapper scripts
+├── models/                     # Trained model files
+├── docker-compose.local.yml    # Local development configuration
+├── docker-compose.production.yml # Production configuration
+├── README_LOCAL.md             # This file - local development guide
+├── DEPLOYMENT.md               # Production deployment guide
+└── agent_instructions.txt     # AI assistant context
 ```
 
 ---
@@ -158,6 +169,11 @@ Am_I_A_Robot/
 ### Container Won't Start
 - **Problem:** Port conflicts or build errors
 - **Solution:** Stop all containers: `docker compose down`, then restart
+
+### API 500 Errors (bcrypt issues)
+- **Problem:** Registration/login endpoints return 500 Internal Server Error
+- **Solution:** This is fixed by pinning bcrypt to version 4.3.0 in requirements.txt
+- **Note:** bcrypt 5.0.0+ has breaking changes incompatible with passlib
 
 ---
 

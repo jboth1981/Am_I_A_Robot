@@ -1,0 +1,34 @@
+# Dockerfile for GPU-accelerated Transformer Training
+# This creates a container with CUDA support for faster training
+
+FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-devel
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    postgresql-client \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements
+COPY requirements.txt .
+COPY transformer_requirements.txt .
+
+# Install base requirements (skip torch since it's in base image)
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Install additional requirements (excluding torch)
+RUN grep -v "torch" transformer_requirements.txt | pip install --no-cache-dir -r /dev/stdin
+
+# Copy application code
+COPY . .
+
+# Set environment variables
+ENV PYTHONPATH=/app
+ENV PYTHONUNBUFFERED=1
+ENV CUDA_VISIBLE_DEVICES=0
+
+# Default command
+CMD ["python", "-m", "app.train_transformer", "--device", "cuda", "--help"]

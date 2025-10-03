@@ -51,6 +51,7 @@ scp -r backend/ user@your-server:/path/to/app/
 scp -r frontend/ user@your-server:/path/to/app/
 scp docker-compose.production.yml user@your-server:/path/to/app/
 scp nginx/default.conf user@your-server:/path/to/app/nginx/
+scp README.md user@your-server:/path/to/app/
 scp README_LOCAL.md user@your-server:/path/to/app/
 ```
 
@@ -70,6 +71,13 @@ docker-compose -f docker-compose.production.yml --profile production up --build 
 - [ ] `.env` file contains `ENV=production`
 - [ ] Running with `-f docker-compose.production.yml --profile production`
 - [ ] Let's Encrypt certificates are generated
+- [ ] Backend dependencies include `bcrypt==4.3.0` (prevents 500 errors)
+
+## Important Notes
+
+- **bcrypt Version**: The backend uses `bcrypt==4.3.0` to prevent compatibility issues with passlib. Do not upgrade to bcrypt 5.0.0+ as it has breaking changes.
+- **Database**: PostgreSQL is used for user data and submission tracking
+- **SSL**: Let's Encrypt certificates are automatically generated for production domains
 - [ ] Frontend accessible at https://amiarobot.ca
 - [ ] Backend accessible at https://api.amiarobot.ca
 
