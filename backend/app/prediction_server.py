@@ -9,7 +9,10 @@ app = FastAPI(title="Am I A Robot - Prediction Service", version="1.0.0")
 # Allow frontend to access backend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Change to your domain in production
+    allow_origins=[
+        "https://amiarobot.ca",
+        "https://www.amiarobot.ca",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

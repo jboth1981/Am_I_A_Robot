@@ -8,16 +8,14 @@ import random
 class BinarySequenceDataset(Dataset):
     """Dataset for binary sequence prediction."""
     
-    def __init__(self, sequences: List[str], targets: List[str], vocab_size: int = 3):
+    def __init__(self, sequences: List[str], max_length: int = 100):
         """
         Args:
             sequences: List of binary sequences (e.g., ["010101", "110011"])
-            targets: List of target next digits (e.g., ["0", "1"])
-            vocab_size: Size of vocabulary (3 for binary: 0, 1, <PAD>)
+            max_length: Maximum sequence length
         """
         self.sequences = sequences
-        self.targets = targets
-        self.vocab_size = vocab_size
+        self.max_length = max_length
         
         # Vocabulary mapping
         self.vocab = {'0': 0, '1': 1, '<PAD>': 2}
@@ -26,62 +24,28 @@ class BinarySequenceDataset(Dataset):
     def __len__(self) -> int:
         return len(self.sequences)
     
-    def __getitem__(self, idx: int) -> Tuple[str, str]:
-        """Get a sequence and target."""
-        return self.sequences[idx], self.targets[idx]
-    
-    def encode_sequence(self, sequence: str, max_length: int = 100) -> Tuple[torch.Tensor, torch.Tensor]:
-        """Convert sequence to tensor representation.
+    def __getitem__(self, idx: int) -> Dict[str, torch.Tensor]:
+        """Get a sequence and create input/target tensors."""
+        sequence = self.sequences[idx]
         
-        Args:
-            sequence: Binary sequence string
-            max_length: Maximum sequence length
-            
-        Returns:
-            Tuple of (input_tensor, attention_mask)
-        """
-        # Convert to token IDs
-        tokens = [self.vocab.get(char, 0) for char in sequence]
+        # Convert to integers
+        tokens = [int(c) for c in sequence]
         
-        # Pad or truncate
-        if len(tokens) > max_length:
-            tokens = tokens[-max_length:]  # Take last max_length tokens
+        # Pad or truncate to max_length
+        if len(tokens) > self.max_length:
+            tokens = tokens[:self.max_length]
+        else:
+            tokens.extend([2] * (self.max_length - len(tokens)))  # Pad with 2
         
-        # Create attention mask (1 for real tokens, 0 for padding)
-        attention_mask = [1] * len(tokens)
+        # Create input and target
+        input_tokens = tokens[:-1]  # All but last
+        target_tokens = tokens[1:]  # All but first
         
-        # Pad to max_length
-        while len(tokens) < max_length:
-            tokens.append(self.vocab['<PAD>'])
-            attention_mask.append(0)
+        # Convert targets to only 0/1 (ignore padding in loss)
+        target_tokens = [t if t < 2 else -100 for t in target_tokens]  # -100 is ignored in CrossEntropyLoss
         
-        return torch.tensor(tokens, dtype=torch.long), torch.tensor(attention_mask, dtype=torch.bool)
-    
-    def create_data_loader(self, batch_size: int = 32, shuffle: bool = True) -> DataLoader:
-        """Create a DataLoader for this dataset."""
-        return DataLoader(self, batch_size=batch_size, shuffle=shuffle)
-    
-    def split_train_val(self, val_ratio: float = 0.2) -> Tuple['BinarySequenceDataset', 'BinarySequenceDataset']:
-        """Split dataset into training and validation sets."""
-        total_size = len(self.sequences)
-        val_size = int(total_size * val_ratio)
-        train_size = total_size - val_size
-        
-        # Create index shuffle
-        indices = list(range(total_size))
-        random.shuffle(indices)
-        
-        train_indices = indices[:train_size]
-        val_indices = indices[train_size:]
-        
-        # Split sequences and targets
-        train_sequences = [self.sequences[i] for i in train_indices]
-        train_targets = [self.targets[i] for i in train_indices]
-        
-        val_sequences = [self.sequences[i] for i in val_indices]
-        val_targets = [self.targets[i] for i in val_indices]
-        
-        train_dataset = BinarySequenceDataset(train_sequences, train_targets, self.vocab_size)
-        val_dataset = BinarySequenceDataset(val_sequences, val_targets, self.vocab_size)
-        
-        return train_dataset, val_dataset
+        return {
+            'input_ids': torch.tensor(input_tokens, dtype=torch.long),
+            'labels': torch.tensor(target_tokens, dtype=torch.long),
+            'attention_mask': torch.tensor([1 if t < 2 else 0 for t in input_tokens], dtype=torch.long)
+        }

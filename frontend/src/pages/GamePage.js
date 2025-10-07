@@ -112,6 +112,11 @@ const GamePage = () => {
       value: 'pattern',
       label: 'Pattern Recognition',
       description: 'Uses pattern rules: 000→0, 111→1, otherwise repeats the last digit'
+    },
+    {
+      value: 'transformer',
+      label: 'AI Transformer',
+      description: 'Uses a neural network trained on binary sequences to predict the next digit'
     }
   ];
 

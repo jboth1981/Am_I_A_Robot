@@ -225,6 +225,7 @@ function MainApp() {
                   >
                     <option value="frequency">Frequency Analysis</option>
                     <option value="pattern">Pattern Recognition</option>
+                    <option value="transformer">AI Transformer</option>
                   </select>
                   <div className="method-description">
                     {predictionMethod === 'frequency' && (
@@ -232,6 +233,9 @@ function MainApp() {
                     )}
                     {predictionMethod === 'pattern' && (
                       <span>Uses pattern rules: 000→0, 111→1, otherwise repeats last digit</span>
+                    )}
+                    {predictionMethod === 'transformer' && (
+                      <span>Uses a neural network trained on binary sequences to predict the next digit</span>
                     )}
                   </div>
                 </div>

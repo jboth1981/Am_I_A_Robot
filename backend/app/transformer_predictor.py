@@ -385,7 +385,11 @@ class BinaryTransformerTrainer:
             'model_config': {
                 'vocab_size': self.model.vocab_size,
                 'd_model': self.model.d_model,
-                'max_seq_length': self.model.max_seq_length
+                'nhead': self.model.transformer.layers[0].self_attn.num_heads,
+                'num_layers': len(self.model.transformer.layers),
+                'dim_feedforward': self.model.transformer.layers[0].linear1.out_features,
+                'max_seq_length': self.model.max_seq_length,
+                'dropout': self.model.transformer.layers[0].dropout.p
             },
             'history': self.history,
             'timestamp': datetime.now().isoformat()
@@ -405,7 +409,11 @@ class BinaryTransformerTrainer:
         model = BinaryTransformer(
             vocab_size=config['vocab_size'],
             d_model=config['d_model'],
-            max_seq_length=config['max_seq_length']
+            nhead=config.get('nhead', 8),
+            num_layers=config.get('num_layers', 6),
+            dim_feedforward=config.get('dim_feedforward', 512),
+            max_seq_length=config['max_seq_length'],
+            dropout=config.get('dropout', 0.1)
         )
         
         model.load_state_dict(checkpoint['model_state_dict'])

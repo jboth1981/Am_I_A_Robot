@@ -7,7 +7,7 @@ from importlib import import_module
 MODEL_REGISTRY: Dict[str, Dict[str, str]] = {
     "binary_transformer": {
         "model_class": "shared_model.models.binary_transformer.model.BinaryTransformer",
-        "trainer_class": "shared_model.models.binary_transformer.trainer.BinaryTransformerTrainer", 
+        "trainer_class": "shared_model.models.binary_transformer.model.BinaryTransformerTrainer", 
         "dataset_class": "shared_model.models.binary_transformer.dataset.BinarySequenceDataset",
         "config_class": "shared_model.models.binary_transformer.config.BinaryTransformerConfig",
         "description": "Transformer-based binary sequence predictor"

@@ -22,7 +22,7 @@ class TransformerPredictionService:
     
     def __init__(self, model_path: Optional[str] = None):
         self.model = None
-        self.model_path = model_path or os.path.join("models", "binary_transformer.pth")
+        self.model_path = model_path or os.path.join("models", "small_transformer.pth")
         self.is_loaded = False
         
         if TRANSFORMER_AVAILABLE:
@@ -39,7 +39,7 @@ class TransformerPredictionService:
         
         try:
             BinaryTransformer = get_model_class("binary_transformer")
-            self.model = BinaryTransformer.load_model(self.model_path, device='cpu')
+            self.model = BinaryTransformer.load_model_from_file(self.model_path, device='cpu')
             self.model.eval()
             self.is_loaded = True
             print(f"Transformer model loaded from {self.model_path}")

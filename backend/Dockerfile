@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Optional: install transformer dependencies via build arg
 ARG INSTALL_TRANSFORMER_DEPS=false
-COPY backend/transformer_requirements.txt ./
+COPY transformer_requirements.txt ./
 RUN pip install --no-cache-dir --upgrade pip \
   && pip install --no-cache-dir fastapi uvicorn sqlalchemy psycopg2-binary python-jose[cryptography] passlib[bcrypt] python-multipart email-validator httpx \
   && if [ "$INSTALL_TRANSFORMER_DEPS" = "true" ]; then \
@@ -21,7 +21,7 @@ RUN pip install --no-cache-dir --upgrade pip \
      fi
 
 # Copy backend files
-COPY backend /app
+COPY . /app
 
 # Copy shared model SDK
 COPY shared_model /app/shared_model

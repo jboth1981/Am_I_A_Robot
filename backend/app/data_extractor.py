@@ -15,7 +15,7 @@ import json
 # Add the app directory to the path so we can import our models
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from models import User, Submission, Base
+from app.models import User, Submission, Base
 
 
 class DataExtractor:

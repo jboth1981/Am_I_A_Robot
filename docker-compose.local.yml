@@ -55,13 +55,16 @@ services:
   backend:
     build:
       context: ./backend
+      args:
+        INSTALL_TRANSFORMER_DEPS: "true"
     container_name: fastapi_backend
     expose:
       - "8000"
     ports:
       - "8000:8000"
     volumes:
-      - ./backend:/app
+      - ./models:/app/models
+      - ./shared_model:/app/shared_model
     environment:
       DATABASE_URL: postgresql://robot_user:local_password@database:5432/am_i_a_robot_local
       RESEND_API_KEY: ${RESEND_API_KEY}
@@ -96,7 +99,7 @@ services:
       NODE_ENV: development
       NODE_OPTIONS: "--max-old-space-size=2048"
       # WebSocket and file watching handled by CRACO
-      FAST_REFRESH: true
+      FAST_REFRESH: "true"
     deploy:
       resources:
         limits:

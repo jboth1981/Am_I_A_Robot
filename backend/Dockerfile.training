@@ -13,8 +13,8 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies for training
-COPY requirements.txt .
-COPY transformer_requirements.txt .
+COPY backend/requirements.txt .
+COPY backend/transformer_requirements.txt .
 
 # Install base requirements (including bcrypt==4.3.0)
 RUN pip install --no-cache-dir --upgrade pip \
@@ -25,7 +25,7 @@ RUN pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu 
     && pip install --no-cache-dir -r transformer_requirements.txt
 
 # Copy backend application code (includes training scripts)
-COPY . .
+COPY backend .
 
 # Copy shared model SDK
 COPY shared_model /app/shared_model

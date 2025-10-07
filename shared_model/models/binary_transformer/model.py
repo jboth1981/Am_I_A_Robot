@@ -36,7 +36,7 @@ class PositionalEncoding(nn.Module):
         return x + self.pe[:x.size(0), :]
 
 
-class BinaryTransformer(BaseModel):
+class BinaryTransformer(BaseModel, nn.Module):
     """
     Transformer model for binary sequence prediction.
     Vocabulary: {0: '0', 1: '1', 2: '<PAD>'}
@@ -179,6 +179,57 @@ class BinaryTransformer(BaseModel):
                 break
         
         return sequence
+    
+    def save_model(self, path: str) -> None:
+        """Save the model to disk."""
+        torch.save({
+            'model_state_dict': self.state_dict(),
+            'model_config': {
+                'vocab_size': self.vocab_size,
+                'd_model': self.d_model,
+                'max_seq_length': self.max_seq_length
+            },
+            'timestamp': datetime.now().isoformat()
+        }, path)
+    
+    def load_model(self, path: str) -> None:
+        """Load the model from disk."""
+        # Get device for loading
+        device = next(self.parameters()).device if list(self.parameters()) else torch.device('cpu')
+        checkpoint = torch.load(path, map_location=device)
+
+        # Load state dict
+        self.load_state_dict(checkpoint['model_state_dict'])
+    
+    def eval_mode(self) -> None:
+        """Set model to evaluation mode."""
+        self.eval()
+    
+    def train_mode(self) -> None:
+        """Set model to training mode."""
+        self.train()
+    
+    @classmethod
+    def load_model_from_file(cls, path: str, device: str = 'auto') -> 'BinaryTransformer':
+        """Load a saved model from file (class method version)"""
+        if device == 'auto':
+            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        else:
+            device = torch.device(device)
+        
+        checkpoint = torch.load(path, map_location=device)
+        config = checkpoint['model_config']
+        
+        model = BinaryTransformer(
+            vocab_size=config['vocab_size'],
+            d_model=config['d_model'],
+            max_seq_length=config['max_seq_length']
+        )
+        
+        model.load_state_dict(checkpoint['model_state_dict'])
+        model.to(device)
+        
+        return model
 
 
 class BinarySequenceDataset(torch.utils.data.Dataset):
@@ -379,8 +430,8 @@ class BinaryTransformerTrainer:
         print("Training completed!")
         return self.history
     
-    def save_model(self, path: str):
-        """Save model and training info"""
+    def save_model(self, path: str) -> None:
+        """Save the model to disk."""
         torch.save({
             'model_state_dict': self.model.state_dict(),
             'model_config': {
@@ -392,9 +443,26 @@ class BinaryTransformerTrainer:
             'timestamp': datetime.now().isoformat()
         }, path)
     
+    def load_model(self, path: str) -> None:
+        """Load the model from disk."""
+        # Get device for loading
+        device = next(self.parameters()).device if list(self.parameters()) else torch.device('cpu')
+        checkpoint = torch.load(path, map_location=device)
+
+        # Load state dict
+        self.load_state_dict(checkpoint['model_state_dict'])
+    
+    def eval_mode(self) -> None:
+        """Set model to evaluation mode."""
+        self.eval()
+    
+    def train_mode(self) -> None:
+        """Set model to training mode."""
+        self.train()
+    
     @classmethod
-    def load_model(cls, path: str, device: str = 'auto') -> BinaryTransformer:
-        """Load a saved model"""
+    def load_model_from_file(cls, path: str, device: str = 'auto') -> 'BinaryTransformer':
+        """Load a saved model from file (class method version)"""
         if device == 'auto':
             device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         else:
@@ -413,35 +481,6 @@ class BinaryTransformerTrainer:
         model.to(device)
         
         return model
-    
-    def eval_mode(self) -> None:
-        """Set model to evaluation mode."""
-        self.eval()
-    
-    def train_mode(self) -> None:
-        """Set model to training mode."""
-        self.train()
-
-    def save_model(self, path: str) -> None:
-        """Save the model to disk."""
-        torch.save({
-            'model_state_dict': self.state_dict(),
-            'model_config': {
-                'vocab_size': self.vocab_size,
-                'd_model': self.d_model,
-                'max_seq_length': self.max_seq_length
-            },
-            'timestamp': datetime.now().isoformat()
-        }, path)
-    
-    def load_model(self, path: str) -> None:
-        """Load the model from disk."""
-        # Get device for loading
-        device = next(self.parameters()).device if list(self.parameters()) else torch.device('cpu')
-        checkpoint = torch.load(path, map_location=device)
-
-        # Load state dict
-        self.load_state_dict(checkpoint['model_state_dict'])
 
 
 if __name__ == "__main__":

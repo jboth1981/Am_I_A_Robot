@@ -4,12 +4,14 @@
 services:
   transformer-training:
     build:
-      context: ./backend
-      dockerfile: Dockerfile.training
+      context: .
+      dockerfile: backend/Dockerfile.training
     container_name: transformer_training
     volumes:
       # Mount the backend directory for code changes
       - ./backend:/app
+      # Mount shared model directory for ML components
+      - ./shared_model:/app/shared_model
       # Mount a models directory for saving trained models
       - ./models:/app/models
       # Mount a data directory for training data exports
@@ -38,11 +40,12 @@ services:
   # GPU version (requires nvidia-docker)
   transformer-training-gpu:
     build:
-      context: ./backend
-      dockerfile: Dockerfile.training-gpu
+      context: .
+      dockerfile: backend/Dockerfile.training-gpu
     container_name: transformer_training_gpu
     volumes:
       - ./backend:/app
+      - ./shared_model:/app/shared_model
       - ./models:/app/models
       - ./training_data:/app/data
     environment:
