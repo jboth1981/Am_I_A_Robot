@@ -42,11 +42,13 @@ class BinaryTransformerTrainer(BaseTrainer):
         
         self.model.to(self.device)
         
-        # Loss function (CrossEntropyLoss for classification)
-        self.criterion = nn.CrossEntropyLoss(ignore_index=2)  # Ignore padding token
+        # Loss function with class weights to handle imbalanced patterns
+        # Weight 0s less heavily since they appear more frequently
+        class_weights = torch.tensor([0.8, 1.2], dtype=torch.float32)  # Favor 1s slightly
+        self.criterion = nn.CrossEntropyLoss(weight=class_weights, ignore_index=2)  # Ignore padding token
         
-        # Optimizer
-        self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
+        # Optimizer with weight decay to prevent overfitting
+        self.optimizer = optim.AdamW(self.model.parameters(), lr=learning_rate, weight_decay=0.01)
         
         # Training history
         self.history = {

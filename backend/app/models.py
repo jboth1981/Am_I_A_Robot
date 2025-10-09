@@ -62,12 +62,17 @@ class Submission(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     binary_sequence = Column(Text, nullable=False)  # The full sequence of 0s and 1s
-    prediction_method = Column(String(20), nullable=False)  # 'frequency' or 'pattern'
+    prediction_method = Column(String(20), nullable=False)  # 'frequency', 'pattern', or 'transformer'
     total_predictions = Column(Integer, nullable=False)
     correct_predictions = Column(Integer, nullable=False)
     accuracy_percentage = Column(Float, nullable=False)
     is_human_result = Column(Boolean, nullable=False)  # True if classified as human
     completed_at = Column(DateTime(timezone=True), server_default=func.now())
+    
+    # New fields for storing individual predictions and confidence scores
+    predictions_json = Column(Text, nullable=True)  # JSON string of all predictions made
+    confidence_scores_json = Column(Text, nullable=True)  # JSON string of confidence scores
+    average_confidence = Column(Float, nullable=True)  # Average confidence across all predictions
     
     # Relationship back to user
     user = relationship("User", back_populates="submissions")

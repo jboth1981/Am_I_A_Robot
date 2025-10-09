@@ -1,87 +1,115 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { authService } from '../services/authService';
 
 const GamePage = () => {
-  const [inputHistory, setInputHistory] = useState('');
-  const [prediction, setPrediction] = useState('');
-  const [score, setScore] = useState({ correct: 0, total: 0, predictions: [] });
-  const [isTyping, setIsTyping] = useState(false);
-  const [isCompleted, setIsCompleted] = useState(false);
+
   const [predictionMethod, setPredictionMethod] = useState('frequency');
   const [showMethodDropdown, setShowMethodDropdown] = useState(false);
+  
+  const [inputHistory, setInputHistory] = useState('');
+  const [prediction, setPrediction] = useState('');
+
+  const [score, setScore] = useState({ correct: 0, total: 0, predictions: [] });
+
+  const [isPredictionInProgress, setIsPredictionInProgress] = useState(false);
+  const [isCompleted, setIsCompleted] = useState(false);
+
   const [hidePredictions, setHidePredictions] = useState(false);
-  const inputRef = React.useRef(null);
-  const initialPredictionMade = React.useRef(false);
+  const [currentInput, setCurrentInput] = useState('');
+  const [isInitialLoading, setIsInitialLoading] = useState(false);
+  const inputRef = useRef(null);
+  const initialPredictionMade = useRef(false);
   const { user, token } = useAuth();
 
+  // This function is called when the user types a digit into the input field
   const handleInputChange = async (e) => {
     const inputValue = e.target.value;
 
+    // When a user enters a digit we need to know the following information:
+    // 1. Did they enter a valid digit (0 or 1)?
+    // 2. What is the digit they entered?
+    // 3. What was the prediction for the current digit?
+    // (There should always be a prediction waiting for the user to type)
+    
+    // Using this information we follow these steps:
+    // 1. If the user entered a valid digit:
+      // 1.1. Clear the input field.
+      // 1.2. Update the input history to include the new digit.
+      // 1.3. Compare the prior prediction with the new digit.
+      // 1.4. Update the score to include the new digit.
+      // 1.5. If this is the last input needed (ie the 100th entry):
+        // 1.5.1. Set the isCompleted flag to true.
+      // 1.6 Otherwise:
+        // 1.6.1. Set the isPredictionInProgress flag to true. This prevents the user from 
+        // typing another digit until the prediction is complete and updated.
+        // 1.6.2. Send the history to the backend to get a new prediction.
+        // 1.6.3. Update the prediction to the new prediction.
+        // 1.6.4. Set the isPredictionInProgress flag to false. This allows the user to type another digit.
+    // 2. If the user entered an invalid digit:
+      // 2.1. Clear the input field.
+      // 2.2. Return.
+
     // Block input while prediction is being calculated
-    if (isTyping) {
-      e.target.value = '';
+    if (isPredictionInProgress) {
+      setCurrentInput('');
       return;
     }
 
-    // Only allow single digit (0 or 1)
-    if (inputValue.length > 1 || (inputValue.length === 1 && !/[01]/.test(inputValue))) {
-      e.target.value = '';
+    // Check if digit is valid. We only allow single digit (0 or 1).
+    const isValidInput = inputValue.length === 1 && /[01]/.test(inputValue);
+    
+    if (!isValidInput) {
+      setCurrentInput('');
       return;
     }
 
-    // If a valid digit was entered
-    if (inputValue.length === 1) {
-      const newChar = inputValue;
-      const newHistory = inputHistory + newChar;
+    // Process the valid input
+    const newChar = inputValue;
+    setCurrentInput(''); // Clear the input for next digit and maintain focus    
 
-      // Clear the input for next digit and maintain focus
-      e.target.value = '';
+    const newHistory = inputHistory + newChar;    
+    setInputHistory(newHistory); // Update history
 
-      // Update history
-      setInputHistory(newHistory);
+    // Store the prediction that was made for this position and check if it was correct
+    if (prediction) {
+      const wasCorrect = (prediction === newChar);
+      setScore(prev => ({
+        correct: prev.correct + (wasCorrect ? 1 : 0),
+        total: prev.total + 1,
+        predictions: [...prev.predictions, prediction]
+      }));
+    }
 
-      // Store the prediction that was made for this position and check if it was correct
-      if (prediction) {
-        const wasCorrect = prediction === newChar;
-        setScore(prev => ({
-          correct: prev.correct + (wasCorrect ? 1 : 0),
-          total: prev.total + 1,
-          predictions: [...prev.predictions, prediction]
-        }));
-      }
+    // Check if we've reached 100 characters
+    if (newHistory.length >= 100) {
+      setIsCompleted(true);
+      return; // Don't make a new prediction for the 101st digit
+    }
 
-      // Check if we've reached 100 characters
-      if (newHistory.length >= 100) {
-        setIsCompleted(true);
-        return; // Don't make a new prediction for the 101st digit
-      }
-
-      // Get new prediction for next character (only if not completed)
-      setIsTyping(true);
-      setPrediction('');
-      
-      try {
-        const data = await authService.predict({ 
-          history: newHistory,
-          method: predictionMethod
-        }, token);
-        
-        setPrediction(data.prediction);
-      } catch (error) {
-        console.error('Error fetching prediction:', error);
-        setPrediction('?');
-      } finally {
-        setIsTyping(false);
-        // Keep focus without setTimeout to avoid mobile keyboard reset
-        if (inputRef.current && !isCompleted) {
-          // Use requestAnimationFrame instead of setTimeout for smoother mobile experience
-          requestAnimationFrame(() => {
-            if (inputRef.current && !isCompleted) {
-              inputRef.current.focus();
-            }
-          });
-        }
+    // Get new prediction for next character (only if not completed)
+    setIsPredictionInProgress(true);
+    
+    // Don't clear prediction immediately - keep showing previous prediction while loading
+    try {
+      const data = await authService.predict({ 
+        history: newHistory,
+        method: predictionMethod
+      }, token);
+      setPrediction(data.prediction);
+    } catch (error) {
+      console.error('Error fetching prediction:', error);
+      setPrediction('?');
+    } finally {
+      setIsPredictionInProgress(false);
+      // Keep focus without setTimeout to avoid mobile keyboard reset
+      if (inputRef.current && !isCompleted) {
+        // Use requestAnimationFrame instead of setTimeout for smoother mobile experience
+        requestAnimationFrame(() => {
+          if (inputRef.current && !isCompleted) {
+            inputRef.current.focus();
+          }
+        });
       }
     }
   };
@@ -89,7 +117,7 @@ const GamePage = () => {
   const handleInputKeyDown = (e) => {
     // Allow backspace/delete to clear the field, but prevent other navigation
     if (e.key === 'Backspace' || e.key === 'Delete') {
-      e.target.value = '';
+      setCurrentInput('');
     }
     // Only allow 0, 1, backspace, delete, and tab
     if (!/[01]/.test(e.key) && !['Backspace', 'Delete', 'Tab'].includes(e.key)) {
@@ -97,9 +125,29 @@ const GamePage = () => {
     }
   };
 
-  const handleMethodSelect = (method) => {
+  const handleMethodSelect = async (method) => {
     setPredictionMethod(method);
     setShowMethodDropdown(false);
+    
+    // Get initial prediction for the new method (only if no digits typed yet)
+    if (inputHistory.length === 0) {
+      setIsInitialLoading(true);
+      try {
+        const data = await authService.predict({ 
+          history: '',
+          method: method
+        }, token);
+        
+        setPrediction(data.prediction);
+        initialPredictionMade.current = true;
+      } catch (error) {
+        console.error('Error fetching initial prediction:', error);
+        setPrediction('?');
+        initialPredictionMade.current = true;
+      } finally {
+        setIsInitialLoading(false);
+      }
+    }
   };
 
   const methodOptions = [
@@ -123,11 +171,11 @@ const GamePage = () => {
   const unpredictabilityRate = score.total > 0 ? (((score.total - score.correct) / score.total) * 100).toFixed(1) : 0;
   const isHuman = unpredictabilityRate > 40; // If unpredictability is high, you're more "human"
 
-  // Get initial prediction when component mounts or method changes (only when no digits typed)
+  // Get initial prediction when component mounts (only when no digits typed)
   React.useEffect(() => {
-    if (inputHistory.length === 0 && !isTyping && (!initialPredictionMade.current || !prediction)) {
+    if (inputHistory.length === 0 && !initialPredictionMade.current) {
       const getInitialPrediction = async () => {
-        setIsTyping(true);
+        setIsInitialLoading(true);
         try {
           const data = await authService.predict({ 
             history: '',
@@ -141,13 +189,13 @@ const GamePage = () => {
           setPrediction('?');
           initialPredictionMade.current = true;
         } finally {
-          setIsTyping(false);
+          setIsInitialLoading(false);
         }
       };
       
       getInitialPrediction();
     }
-  }, [predictionMethod, inputHistory.length, isTyping, token]);
+  }, [inputHistory.length, token]); // Removed predictionMethod from dependencies
 
   // Save submission when completed (for authenticated users only)
   React.useEffect(() => {
@@ -209,11 +257,14 @@ const GamePage = () => {
     setInputHistory('');
     setPrediction('');
     setScore({ correct: 0, total: 0, predictions: [] });
-    setIsTyping(false);
+    setIsPredictionInProgress(false);
     setIsCompleted(false);
-    setPredictionMethod('frequency');
+    setIsInitialLoading(false); // Reset initial loading state
+    // Keep the current prediction method instead of resetting to 'frequency'
+    // setPredictionMethod('frequency'); // Removed this line
     setShowMethodDropdown(false);
     setHidePredictions(false); // Reset hide predictions checkbox
+    setCurrentInput(''); // Clear the input field
     initialPredictionMade.current = false; // Reset the ref so initial prediction will be made again
     // Focus the input after reset using requestAnimationFrame for better mobile support
     requestAnimationFrame(() => {
@@ -259,12 +310,12 @@ const GamePage = () => {
                   type="tel"
                   inputMode="numeric"
                   pattern="[01]"
-                  value=""
+                  value={currentInput}
                   onChange={handleInputChange}
                   onKeyDown={handleInputKeyDown}
-                  className={`single-digit-input ${isTyping ? 'processing' : ''}`}
+                  className={`single-digit-input ${isPredictionInProgress ? 'processing' : ''}`}
                   maxLength="1"
-                  disabled={isCompleted || isTyping}
+                  disabled={isCompleted || isPredictionInProgress}
                   autoFocus
                 />
               </div>
@@ -272,7 +323,7 @@ const GamePage = () => {
               <div className="prediction-area">
                 <label>Prediction</label>
                 <div className="prediction-display">
-                  {isTyping ? (
+                  {isPredictionInProgress || isInitialLoading ? (
                     <span className="loading">...</span>
                   ) : hidePredictions && prediction ? (
                     <span className="hidden-prediction">?</span>
@@ -380,6 +431,10 @@ const GamePage = () => {
                     if (index === inputHistory.length && prediction && !isCompleted) {
                       // This is the next digit position - show current prediction (or hide if checkbox is checked)
                       className += ' prediction-next';
+                      displayContent = hidePredictions ? '?' : prediction;
+                    } else if (!userDigit && index === 0 && prediction && !isCompleted) {
+                      // Show initial prediction at position 0 before user types anything
+                      className += ' prediction-initial';
                       displayContent = hidePredictions ? '?' : prediction;
                     } else if (!userDigit) {
                       // Empty cell - not filled yet

@@ -1,0 +1,59 @@
+{
+  "model_config": {
+    "vocab_size": 3,
+    "d_model": 32,
+    "nhead": 2,
+    "num_layers": 1,
+    "dim_feedforward": 512,
+    "max_seq_length": 100,
+    "dropout": 0.1
+  },
+  "training_args": {
+    "data_source": "database",
+    "data_file": null,
+    "database_url": null,
+    "min_unpredictability": 0.0,
+    "method_filter": null,
+    "min_length": 10,
+    "max_length": 100,
+    "augment": 1,
+    "val_ratio": 0.2,
+    "d_model": 32,
+    "nhead": 2,
+    "num_layers": 1,
+    "dim_feedforward": 512,
+    "max_seq_length": 100,
+    "dropout": 0.1,
+    "epochs": 2,
+    "batch_size": 4,
+    "learning_rate": 0.0001,
+    "device": "auto",
+    "output_dir": "/app/models",
+    "model_name": "auto_deploy_test",
+    "save_every": 10,
+    "print_every": 1,
+    "seed": 42,
+    "dry_run": false
+  },
+  "training_history": {
+    "train_loss": [
+      0.6982740461826324,
+      0.6930000483989716
+    ],
+    "val_loss": [
+      0.6865292191505432,
+      0.6799238324165344
+    ],
+    "val_accuracy": [
+      0.5151515151515151,
+      0.5555555555555556
+    ]
+  },
+  "data_stats": {
+    "total_sequences": 7,
+    "train_sequences": 6,
+    "val_sequences": 1,
+    "avg_sequence_length": 100.0
+  },
+  "timestamp": "2025-10-09T16:12:45.083402"
+}

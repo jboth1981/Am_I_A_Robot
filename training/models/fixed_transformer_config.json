@@ -1,0 +1,68 @@
+{
+  "model_config": {
+    "vocab_size": 3,
+    "d_model": 64,
+    "nhead": 4,
+    "num_layers": 2,
+    "dim_feedforward": 512,
+    "max_seq_length": 100,
+    "dropout": 0.1
+  },
+  "training_args": {
+    "data_source": "database",
+    "data_file": null,
+    "database_url": null,
+    "min_unpredictability": 0.0,
+    "method_filter": null,
+    "min_length": 10,
+    "max_length": 100,
+    "augment": 1,
+    "val_ratio": 0.2,
+    "d_model": 64,
+    "nhead": 4,
+    "num_layers": 2,
+    "dim_feedforward": 512,
+    "max_seq_length": 100,
+    "dropout": 0.1,
+    "epochs": 5,
+    "batch_size": 4,
+    "learning_rate": 0.0001,
+    "device": "auto",
+    "output_dir": "/app/models",
+    "model_name": "fixed_transformer",
+    "save_every": 10,
+    "print_every": 1,
+    "seed": 42,
+    "dry_run": false
+  },
+  "training_history": {
+    "train_loss": [
+      0.6908341348171234,
+      0.6879150867462158,
+      0.6782203316688538,
+      0.6763168275356293,
+      0.6636549234390259
+    ],
+    "val_loss": [
+      0.6891518831253052,
+      0.6867039799690247,
+      0.6841283440589905,
+      0.679591178894043,
+      0.6769549250602722
+    ],
+    "val_accuracy": [
+      0.5050505050505051,
+      0.5555555555555556,
+      0.5757575757575758,
+      0.6363636363636364,
+      0.6565656565656566
+    ]
+  },
+  "data_stats": {
+    "total_sequences": 7,
+    "train_sequences": 6,
+    "val_sequences": 1,
+    "avg_sequence_length": 100.0
+  },
+  "timestamp": "2025-10-09T16:01:18.593509"
+}

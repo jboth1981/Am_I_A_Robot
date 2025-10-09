@@ -15,6 +15,11 @@ import os
 from datetime import datetime
 from shared_model.base.model_base import BaseModel
 
+# Vocabulary constants
+START_TOKEN = 2
+PAD_TOKEN = 3
+VOCAB_SIZE = 4  # 0, 1, START_TOKEN, PAD_TOKEN
+
 
 class PositionalEncoding(nn.Module):
     """Positional encoding for transformer model"""
@@ -39,12 +44,12 @@ class PositionalEncoding(nn.Module):
 class BinaryTransformer(BaseModel, nn.Module):
     """
     Transformer model for binary sequence prediction.
-    Vocabulary: {0: '0', 1: '1', 2: '<PAD>'}
+    Vocabulary: {0: 0, 1: 1, 2: PAD_TOKEN}
     """
     
     def __init__(
         self,
-        vocab_size: int = 3,  # 0, 1, and padding token
+        vocab_size: int = VOCAB_SIZE,  # 0, 1, and PAD_TOKEN
         d_model: int = 128,
         nhead: int = 8,
         num_layers: int = 6,
@@ -84,7 +89,7 @@ class BinaryTransformer(BaseModel, nn.Module):
         self.output_projection.bias.data.zero_()
         self.output_projection.weight.data.uniform_(-initrange, initrange)
     
-    def create_padding_mask(self, x, pad_token=2):
+    def create_padding_mask(self, x, pad_token=PAD_TOKEN):
         """Create mask for padded positions"""
         return (x == pad_token)
     
@@ -134,10 +139,14 @@ class BinaryTransformer(BaseModel, nn.Module):
         """
         self.eval()
         
-        # Convert sequence to tensor
-        tokens = [int(c) for c in sequence]
-        if len(tokens) > self.max_seq_length - 1:
-            tokens = tokens[-(self.max_seq_length - 1):]  # Keep last N-1 tokens
+        # Handle empty sequence - use START token
+        if not sequence:
+            tokens = [START_TOKEN]
+        else:
+            # Convert sequence to tensor
+            tokens = [int(c) for c in sequence]
+            if len(tokens) > self.max_seq_length - 1:
+                tokens = tokens[-(self.max_seq_length - 1):]  # Keep last N-1 tokens
         
         # Add to batch dimension
         input_tensor = torch.tensor([tokens], dtype=torch.long)
@@ -187,7 +196,11 @@ class BinaryTransformer(BaseModel, nn.Module):
             'model_config': {
                 'vocab_size': self.vocab_size,
                 'd_model': self.d_model,
-                'max_seq_length': self.max_seq_length
+                'nhead': self.transformer.layers[0].self_attn.num_heads,
+                'num_layers': len(self.transformer.layers),
+                'dim_feedforward': self.transformer.layers[0].linear1.out_features,
+                'max_seq_length': self.max_seq_length,
+                'dropout': self.transformer.layers[0].dropout.p
             },
             'timestamp': datetime.now().isoformat()
         }, path)
@@ -223,7 +236,11 @@ class BinaryTransformer(BaseModel, nn.Module):
         model = BinaryTransformer(
             vocab_size=config['vocab_size'],
             d_model=config['d_model'],
-            max_seq_length=config['max_seq_length']
+            nhead=config['nhead'],
+            num_layers=config['num_layers'],
+            dim_feedforward=config['dim_feedforward'],
+            max_seq_length=config['max_seq_length'],
+            dropout=config['dropout']
         )
         
         model.load_state_dict(checkpoint['model_state_dict'])
@@ -259,12 +276,12 @@ class BinarySequenceDataset(torch.utils.data.Dataset):
         target_tokens = tokens[1:]  # All but first
         
         # Convert targets to only 0/1 (ignore padding in loss)
-        target_tokens = [t if t < 2 else -100 for t in target_tokens]  # -100 is ignored in CrossEntropyLoss
+        target_tokens = [t if t < PAD_TOKEN else -100 for t in target_tokens]  # -100 is ignored in CrossEntropyLoss
         
         return {
             'input_ids': torch.tensor(input_tokens, dtype=torch.long),
             'labels': torch.tensor(target_tokens, dtype=torch.long),
-            'attention_mask': torch.tensor([1 if t < 2 else 0 for t in input_tokens], dtype=torch.long)
+            'attention_mask': torch.tensor([1 if t < PAD_TOKEN else 0 for t in input_tokens], dtype=torch.long)
         }
 
 
@@ -437,7 +454,11 @@ class BinaryTransformerTrainer:
             'model_config': {
                 'vocab_size': self.model.vocab_size,
                 'd_model': self.model.d_model,
-                'max_seq_length': self.model.max_seq_length
+                'nhead': self.model.transformer.layers[0].self_attn.num_heads,
+                'num_layers': len(self.model.transformer.layers),
+                'dim_feedforward': self.model.transformer.layers[0].linear1.out_features,
+                'max_seq_length': self.model.max_seq_length,
+                'dropout': self.model.transformer.layers[0].dropout.p
             },
             'history': self.history,
             'timestamp': datetime.now().isoformat()
@@ -460,29 +481,6 @@ class BinaryTransformerTrainer:
         """Set model to training mode."""
         self.train()
     
-    @classmethod
-    def load_model_from_file(cls, path: str, device: str = 'auto') -> 'BinaryTransformer':
-        """Load a saved model from file (class method version)"""
-        if device == 'auto':
-            device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        else:
-            device = torch.device(device)
-        
-        checkpoint = torch.load(path, map_location=device)
-        config = checkpoint['model_config']
-        
-        model = BinaryTransformer(
-            vocab_size=config['vocab_size'],
-            d_model=config['d_model'],
-            max_seq_length=config['max_seq_length']
-        )
-        
-        model.load_state_dict(checkpoint['model_state_dict'])
-        model.to(device)
-        
-        return model
-
-
 if __name__ == "__main__":
     # Example usage
     print("Binary Transformer Predictor")

@@ -56,7 +56,7 @@ services:
     build:
       context: ./backend
       args:
-        INSTALL_TRANSFORMER_DEPS: "true"
+        INSTALL_TRANSFORMER_INFERENCE: "true"
     container_name: fastapi_backend
     expose:
       - "8000"

@@ -10,21 +10,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
   && rm -rf /var/lib/apt/lists/*
 
-# Optional: install transformer dependencies via build arg
-ARG INSTALL_TRANSFORMER_DEPS=false
-COPY transformer_requirements.txt ./
+# Optional: install transformer inference dependencies via build arg
+ARG INSTALL_TRANSFORMER_INFERENCE=false
+COPY inference_requirements.txt ./
+
 RUN pip install --no-cache-dir --upgrade pip \
+  && pip install --no-cache-dir bcrypt==4.3.0 \
   && pip install --no-cache-dir fastapi uvicorn sqlalchemy psycopg2-binary python-jose[cryptography] passlib[bcrypt] python-multipart email-validator httpx \
-  && if [ "$INSTALL_TRANSFORMER_DEPS" = "true" ]; then \
+  && if [ "$INSTALL_TRANSFORMER_INFERENCE" = "true" ]; then \
        pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch torchvision torchaudio \
-       && pip install --no-cache-dir -r transformer_requirements.txt ; \
+       && pip install --no-cache-dir -r inference_requirements.txt ; \
      fi
 
 # Copy backend files
 COPY . /app
-
-# Copy shared model SDK
-COPY shared_model /app/shared_model
 
 # Set environment variables
 ENV PYTHONPATH=/app:/app/shared_model

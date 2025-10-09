@@ -1,0 +1,9 @@
+# Minimal requirements for transformer inference only
+# No training dependencies like matplotlib, seaborn, scikit-learn, etc.
+
+# Core ML inference
+torch>=2.0.0
+numpy>=1.21.0
+
+# Basic utilities
+tqdm>=4.62.0

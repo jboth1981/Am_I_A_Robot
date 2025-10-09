@@ -198,7 +198,7 @@ async def request_password_reset(request: PasswordResetRequest, db: Session = De
     reset_url = f"https://amiarobot.ca/reset-password?token={token}"
     
     try:
-        from app.email import send_password_reset_email
+        from app.email_service import send_password_reset_email
         await send_password_reset_email(user.email, reset_url)
         print(f"Password reset email sent to {user.email}")
     except Exception as e:
@@ -242,13 +242,16 @@ def reset_password(reset_data: PasswordReset, db: Session = Depends(get_db)):
     
     return {"message": "Password reset successfully"}
 
-# Initialize transformer service (will gracefully handle missing dependencies)
+# Initialize lightweight transformer inference service
 try:
-    from app.transformer_integration import predict_enhanced
-    TRANSFORMER_AVAILABLE = True
-except ImportError:
+    from .transformer_inference import predict_enhanced, TRANSFORMER_AVAILABLE
+    if TRANSFORMER_AVAILABLE:
+        print("✓ Transformer inference service loaded")
+    else:
+        print("⚠ Transformer dependencies not available - using fallback methods")
+except ImportError as e:
     TRANSFORMER_AVAILABLE = False
-    print("Warning: Transformer dependencies not available. Install torch to use transformer predictions.")
+    print(f"Warning: Transformer inference not available: {e}")
 
 # Optimized prediction endpoint - no database dependencies
 @app.post("/predict/")
@@ -294,7 +297,10 @@ def create_submission(
         total_predictions=submission_data.total_predictions,
         correct_predictions=submission_data.correct_predictions,
         accuracy_percentage=submission_data.accuracy_percentage,
-        is_human_result=submission_data.is_human_result
+        is_human_result=submission_data.is_human_result,
+        predictions_json=submission_data.predictions_json,
+        confidence_scores_json=submission_data.confidence_scores_json,
+        average_confidence=submission_data.average_confidence
     )
     
     db.add(db_submission)

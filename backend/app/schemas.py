@@ -46,11 +46,14 @@ class PasswordReset(BaseModel):
 class SubmissionCreate(BaseModel):
     """Schema for creating a new submission"""
     binary_sequence: str
-    prediction_method: str  # 'frequency' or 'pattern'
+    prediction_method: str  # 'frequency', 'pattern', or 'transformer'
     total_predictions: int
     correct_predictions: int
     accuracy_percentage: float
     is_human_result: bool
+    predictions_json: Optional[str] = None  # JSON string of all predictions made
+    confidence_scores_json: Optional[str] = None  # JSON string of confidence scores
+    average_confidence: Optional[float] = None  # Average confidence across all predictions
 
 class SubmissionResponse(BaseModel):
     """Schema for submission data returned by API"""
@@ -63,6 +66,9 @@ class SubmissionResponse(BaseModel):
     accuracy_percentage: float
     is_human_result: bool
     completed_at: datetime
+    predictions_json: Optional[str] = None
+    confidence_scores_json: Optional[str] = None
+    average_confidence: Optional[float] = None
     
     class Config:
         from_attributes = True

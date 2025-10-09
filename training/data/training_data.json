@@ -1,0 +1,100 @@
+{
+  "metadata": {
+    "extraction_date": "2025-10-09T15:58:17.441337",
+    "total_sequences": 7,
+    "min_unpredictability_filter": 0.3,
+    "database_stats": {
+      "total_users": 2,
+      "total_submissions": 7,
+      "method_breakdown": {
+        "frequency": 6,
+        "pattern": 0
+      },
+      "classification_breakdown": {
+        "human": 7,
+        "robot": 0
+      },
+      "performance_stats": {
+        "avg_accuracy": 44.142857142857146,
+        "avg_unpredictability": 55.857142857142854,
+        "min_accuracy": 31.0,
+        "max_accuracy": 56.0,
+        "min_unpredictability": 44.0,
+        "max_unpredictability": 69.0
+      }
+    },
+    "filtered_sequences": 7
+  },
+  "sequences": [
+    {
+      "sequence": "0011101010101100100100100010111111010101010111010101010101001000101010101010100001001101011101010101",
+      "method": "frequency",
+      "total_predictions": 100,
+      "correct_predictions": 36,
+      "accuracy": 36.0,
+      "unpredictability": 64.0,
+      "is_human": true,
+      "completed_at": "2025-10-08T22:07:22.138344+00:00"
+    },
+    {
+      "sequence": "0000111011111111001010101010100001101010101011000011100100101010101010101000111010011101010110001010",
+      "method": "transformer",
+      "total_predictions": 100,
+      "correct_predictions": 35,
+      "accuracy": 35.0,
+      "unpredictability": 65.0,
+      "is_human": true,
+      "completed_at": "2025-10-08T22:07:41.830712+00:00"
+    },
+    {
+      "sequence": "1001001010001101111100111110110001111011111011011000011110011000100111001110110011001101010000011110",
+      "method": "frequency",
+      "total_predictions": 100,
+      "correct_predictions": 53,
+      "accuracy": 53.0,
+      "unpredictability": 47.0,
+      "is_human": true,
+      "completed_at": "2025-10-09T15:56:38.994417+00:00"
+    },
+    {
+      "sequence": "1010101011110001100010010101110010101011110001101111000110101010101000000111101001001010110010101010",
+      "method": "frequency",
+      "total_predictions": 100,
+      "correct_predictions": 31,
+      "accuracy": 31.0,
+      "unpredictability": 69.0,
+      "is_human": true,
+      "completed_at": "2025-10-09T15:56:55.178170+00:00"
+    },
+    {
+      "sequence": "1001010000010010100100111110101010111010111001010101001010101110110101011111010101010111101110100001",
+      "method": "frequency",
+      "total_predictions": 100,
+      "correct_predictions": 50,
+      "accuracy": 50.0,
+      "unpredictability": 50.0,
+      "is_human": true,
+      "completed_at": "2025-10-09T15:57:09.951476+00:00"
+    },
+    {
+      "sequence": "1011011100100100111101111100011100011100111101010110101010110001110010110110000100010100101001000100",
+      "method": "frequency",
+      "total_predictions": 100,
+      "correct_predictions": 48,
+      "accuracy": 48.0,
+      "unpredictability": 52.0,
+      "is_human": true,
+      "completed_at": "2025-10-09T15:57:25.698210+00:00"
+    },
+    {
+      "sequence": "0101000100101001100011010100010101010001101100101000001010101001110111010000100101111100010100010101",
+      "method": "frequency",
+      "total_predictions": 100,
+      "correct_predictions": 56,
+      "accuracy": 56.0,
+      "unpredictability": 44.0,
+      "is_human": true,
+      "completed_at": "2025-10-09T15:57:40.129096+00:00"
+    }
+  ]
+}
