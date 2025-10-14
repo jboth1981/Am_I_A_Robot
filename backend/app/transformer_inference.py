@@ -23,7 +23,7 @@ class TransformerInferenceService:
     
     def __init__(self, model_path: Optional[str] = None):
         self.model = None
-        self.model_path = model_path or os.path.join("models", "improved_transformer_final.pth")
+        self.model_path = model_path or os.path.join("models", "batch_8_model_final.pth")
         self.is_loaded = False
         
         if TRANSFORMER_AVAILABLE:
@@ -35,7 +35,23 @@ class TransformerInferenceService:
             if os.path.exists(self.model_path):
                 self.model = BinaryTransformer.load_model_from_file(self.model_path)
                 self.is_loaded = True
-                print(f"✓ Transformer model loaded from {self.model_path}")
+                
+                # Get model file info for identification
+                import stat
+                file_stats = os.stat(self.model_path)
+                file_size = file_stats.st_size
+                file_mtime = file_stats.st_mtime
+                import datetime
+                mod_time = datetime.datetime.fromtimestamp(file_mtime).strftime('%Y-%m-%d %H:%M:%S')
+                
+                # Extract model name from path
+                model_name = os.path.basename(self.model_path)
+                
+                print(f"✓ Transformer model loaded: {model_name}")
+                print(f"  📁 Path: {self.model_path}")
+                print(f"  📊 Size: {file_size:,} bytes ({file_size/1024/1024:.1f} MB)")
+                print(f"  🕒 Modified: {mod_time}")
+                print(f"  🧠 Model ready for inference")
             else:
                 print(f"⚠ Model not found at {self.model_path}")
                 self.is_loaded = False
@@ -69,6 +85,10 @@ def predict_enhanced(history: str, method: str = "transformer", temperature: flo
         try:
             service = get_inference_service()
             if service.is_loaded:
+                # Log transformer usage
+                model_name = os.path.basename(service.model_path)
+                print(f"🤖 Using transformer model: {model_name} for sequence: '{history[:20]}{'...' if len(history) > 20 else ''}'")
+                
                 prediction, confidence = service.predict_next(history)
                 return {
                     "prediction": prediction,
@@ -77,6 +97,7 @@ def predict_enhanced(history: str, method: str = "transformer", temperature: flo
                     "fallback": False
                 }
             else:
+                print(f"⚠ Transformer model not loaded, falling back to frequency method")
                 # Fallback to simple frequency method
                 prediction = predict_frequency_simple(history)
                 return {
@@ -86,7 +107,7 @@ def predict_enhanced(history: str, method: str = "transformer", temperature: flo
                     "fallback": True
                 }
         except Exception as e:
-            print(f"Transformer prediction failed: {e}")
+            print(f"✗ Transformer prediction failed: {e}, falling back to frequency method")
             # Fallback to simple frequency method
             prediction = predict_frequency_simple(history)
             return {

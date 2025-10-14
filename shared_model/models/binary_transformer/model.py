@@ -151,6 +151,10 @@ class BinaryTransformer(BaseModel, nn.Module):
         # Add to batch dimension
         input_tensor = torch.tensor([tokens], dtype=torch.long)
         
+        # Move input to same device as model
+        if next(self.parameters()).is_cuda:
+            input_tensor = input_tensor.cuda()
+        
         with torch.no_grad():
             # Forward pass
             logits = self.forward(input_tensor)

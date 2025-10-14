@@ -1,10 +1,33 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { authService } from '../services/authService';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+);
 
 const GamePage = () => {
 
-  const [predictionMethod, setPredictionMethod] = useState('frequency');
+  const [predictionMethod, setPredictionMethod] = useState('transformer');
   const [showMethodDropdown, setShowMethodDropdown] = useState(false);
   
   const [inputHistory, setInputHistory] = useState('');
@@ -16,114 +39,262 @@ const GamePage = () => {
   const [isCompleted, setIsCompleted] = useState(false);
 
   const [hidePredictions, setHidePredictions] = useState(false);
-  const [currentInput, setCurrentInput] = useState('');
-  const [isInitialLoading, setIsInitialLoading] = useState(false);
-  const inputRef = useRef(null);
+  const [showVerdict, setShowVerdict] = useState(false);
+  const [showHumanText, setShowHumanText] = useState(false);
+  const [verdictStage, setVerdictStage] = useState(0); // 0: hidden, 1: "You Are A:", 2: stamp, 3: tagline, 4: full text
+  const [unpredictabilityHistory, setUnpredictabilityHistory] = useState([]);
   const initialPredictionMade = useRef(false);
+  const handleKeyPressRef = useRef();
+  const lastProcessedPosition = useRef(-1);
   const { user, token } = useAuth();
 
-  // This function is called when the user types a digit into the input field
-  const handleInputChange = async (e) => {
-    const inputValue = e.target.value;
+  // Chart configuration constants
+  const CHART_COLORS = {
+    robot: 'rgba(220, 53, 69, 0.1)',    // Light red
+    human: 'rgba(40, 167, 69, 0.1)',   // Light green
+    line: '#6c757d',                    // Light grey
+    predicted: '#dc3545',               // Red for predicted
+    unpredicted: '#28a745',             // Green for unpredicted
+  };
 
-    // When a user enters a digit we need to know the following information:
-    // 1. Did they enter a valid digit (0 or 1)?
-    // 2. What is the digit they entered?
-    // 3. What was the prediction for the current digit?
-    // (There should always be a prediction waiting for the user to type)
-    
-    // Using this information we follow these steps:
-    // 1. If the user entered a valid digit:
-      // 1.1. Clear the input field.
-      // 1.2. Update the input history to include the new digit.
-      // 1.3. Compare the prior prediction with the new digit.
-      // 1.4. Update the score to include the new digit.
-      // 1.5. If this is the last input needed (ie the 100th entry):
-        // 1.5.1. Set the isCompleted flag to true.
-      // 1.6 Otherwise:
-        // 1.6.1. Set the isPredictionInProgress flag to true. This prevents the user from 
-        // typing another digit until the prediction is complete and updated.
-        // 1.6.2. Send the history to the backend to get a new prediction.
-        // 1.6.3. Update the prediction to the new prediction.
-        // 1.6.4. Set the isPredictionInProgress flag to false. This allows the user to type another digit.
-    // 2. If the user entered an invalid digit:
-      // 2.1. Clear the input field.
-      // 2.2. Return.
+  // Helper function to determine if prediction was correct
+  const wasPredictionCorrect = (index) => {
+    return score.predictions?.[index] && 
+           inputHistory[index] && 
+           score.predictions[index] !== inputHistory[index];
+  };
 
-    // Block input while prediction is being calculated
-    if (isPredictionInProgress) {
-      setCurrentInput('');
-      return;
-    }
+  // Chart.js configuration
+  const chartData = {
+    labels: Array.from({ length: 100 }, (_, index) => index + 1),
+    datasets: [
+      // Robot region background (0-50%)
+      {
+        label: 'Robot Region',
+        data: Array(100).fill(50),
+        backgroundColor: CHART_COLORS.robot,
+        borderColor: 'transparent',
+        borderWidth: 0,
+        pointRadius: 0,
+        fill: 'origin',
+        tension: 0,
+      },
+      // Human region background (50-100%)
+      {
+        label: 'Human Region',
+        data: Array(100).fill(50),
+        backgroundColor: CHART_COLORS.human,
+        borderWidth: 0,
+        pointRadius: 0,
+        fill: 'end',
+        tension: 0,
+      },
+      // Main unpredictability line
+      {
+        label: 'Unpredictability %',
+        data: Array.from({ length: 100 }, (_, index) => 
+          index < unpredictabilityHistory.length ? unpredictabilityHistory[index] : null
+        ),
+        borderColor: CHART_COLORS.line,
+        backgroundColor: 'transparent',
+        borderWidth: 2,
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        pointBackgroundColor: Array.from({ length: 100 }, (_, index) => {
+          if (index >= unpredictabilityHistory.length) return 'transparent';
+          return wasPredictionCorrect(index) ? CHART_COLORS.unpredicted : CHART_COLORS.predicted;
+        }),
+        pointBorderColor: '#ffffff',
+        pointBorderWidth: 2,
+        tension: 0.1,
+        fill: false,
+        spanGaps: false,
+      },
+    ],
+  };
 
-    // Check if digit is valid. We only allow single digit (0 or 1).
-    const isValidInput = inputValue.length === 1 && /[01]/.test(inputValue);
-    
-    if (!isValidInput) {
-      setCurrentInput('');
-      return;
-    }
-
-    // Process the valid input
-    const newChar = inputValue;
-    setCurrentInput(''); // Clear the input for next digit and maintain focus    
-
-    const newHistory = inputHistory + newChar;    
-    setInputHistory(newHistory); // Update history
-
-    // Store the prediction that was made for this position and check if it was correct
-    if (prediction) {
-      const wasCorrect = (prediction === newChar);
-      setScore(prev => ({
-        correct: prev.correct + (wasCorrect ? 1 : 0),
-        total: prev.total + 1,
-        predictions: [...prev.predictions, prediction]
-      }));
-    }
-
-    // Check if we've reached 100 characters
-    if (newHistory.length >= 100) {
-      setIsCompleted(true);
-      return; // Don't make a new prediction for the 101st digit
-    }
-
-    // Get new prediction for next character (only if not completed)
-    setIsPredictionInProgress(true);
-    
-    // Don't clear prediction immediately - keep showing previous prediction while loading
-    try {
-      const data = await authService.predict({ 
-        history: newHistory,
-        method: predictionMethod
-      }, token);
-      setPrediction(data.prediction);
-    } catch (error) {
-      console.error('Error fetching prediction:', error);
-      setPrediction('?');
-    } finally {
-      setIsPredictionInProgress(false);
-      // Keep focus without setTimeout to avoid mobile keyboard reset
-      if (inputRef.current && !isCompleted) {
-        // Use requestAnimationFrame instead of setTimeout for smoother mobile experience
-        requestAnimationFrame(() => {
-          if (inputRef.current && !isCompleted) {
-            inputRef.current.focus();
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: {
+      duration: 0 // Disable animations
+    },
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            if (context.datasetIndex === 2) { // Main unpredictability line
+              const index = context.dataIndex;
+              const status = wasPredictionCorrect(index) ? 'Unpredicted (Human-like)' : 'Predicted (Robot-like)';
+              return `Entry ${context.label}: ${context.parsed.y}% unpredictable - ${status}`;
+            }
+            return null;
           }
-        });
-      }
-    }
+        }
+      },
+    },
+    scales: {
+      x: {
+        title: {
+          display: false // Remove "Entry Number" label
+        },
+        min: 1,
+        max: 100,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.1)',
+        },
+        ticks: {
+          stepSize: 10, // Show only 10, 20, 30, etc.
+          min: 10,
+          max: 100,
+          callback: function(value) {
+            return value % 10 === 0 ? value : ''; // Only show multiples of 10
+          },
+          maxRotation: 0, // Keep labels horizontal
+          minRotation: 0
+        }
+      },
+      y: {
+        title: {
+          display: false // Remove "Unpredictability %" label
+        },
+        min: 0,
+        max: 100,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.1)',
+        },
+        ticks: {
+          callback: function(value) {
+            return value + '%';
+          },
+          stepSize: 25, // Force ticks at 0, 25, 50, 75, 100
+          min: 0,
+          max: 100
+        }
+      },
+    },
+    elements: {
+      point: {
+        hoverBackgroundColor: '#1e7e34',
+      },
+    },
   };
 
-  const handleInputKeyDown = (e) => {
-    // Allow backspace/delete to clear the field, but prevent other navigation
-    if (e.key === 'Backspace' || e.key === 'Delete') {
-      setCurrentInput('');
+  // Handle global keyboard input
+  const handleKeyPress = useCallback(async (e) => {
+    // Only process if game is not completed
+    if (isCompleted) {
+      return;
     }
-    // Only allow 0, 1, backspace, delete, and tab
-    if (!/[01]/.test(e.key) && !['Backspace', 'Delete', 'Tab'].includes(e.key)) {
-      e.preventDefault();
+
+    // Check if key is 0 or 1
+    if (e.key !== '0' && e.key !== '1') {
+      return;
     }
-  };
+
+    // Prevent processing if already in progress
+    if (isPredictionInProgress) {
+      return;
+    }
+
+    const newChar = e.key;
+    
+    // Prevent duplicate processing (React StrictMode causes double execution)
+    if (lastProcessedPosition.current >= inputHistory.length) {
+      return;
+    }
+    
+    // Mark this position as processed
+    lastProcessedPosition.current = inputHistory.length;
+    
+    // Set processing flag
+    setIsPredictionInProgress(true);
+
+    try {
+      // Process the character
+      const newHistory = inputHistory + newChar;
+      
+      // Capture the current prediction BEFORE updating history
+      const currentPrediction = prediction;
+      
+      // Update history
+      setInputHistory(newHistory);
+
+              // Store the prediction that was made for this position and check if it was correct
+              if (currentPrediction) {
+                const wasCorrect = (currentPrediction === newChar);
+                setScore(prev => {
+                  const newScore = {
+                    correct: prev.correct + (wasCorrect ? 1 : 0),
+                    total: prev.total + 1,
+                    predictions: [...prev.predictions, currentPrediction]
+                  };
+                  
+                  return newScore;
+                });
+              }
+
+              // Check if we've reached 100 characters
+              if (newHistory.length >= 100) {
+                setIsCompleted(true);
+                // Start the multi-stage verdict animation sequence
+                setShowVerdict(true);
+                setVerdictStage(1); // Show "You Are A:"
+                
+                setTimeout(() => {
+                  setVerdictStage(2); // Show stamp
+                }, 1500);
+                
+                setTimeout(() => {
+                  setVerdictStage(3); // Show tagline
+                }, 4000);
+                
+                setTimeout(() => {
+                  setVerdictStage(4); // Show full text
+                }, 6000);
+                return;
+              }
+
+      // Get new prediction for next character
+      try {
+        const data = await authService.predict({ 
+          history: newHistory,
+          method: predictionMethod
+        }, token);
+        setPrediction(data.prediction);
+      } catch (error) {
+        console.error('Error fetching prediction:', error);
+        setPrediction('?');
+      }
+    } finally {
+      // Always reset processing flag
+      setIsPredictionInProgress(false);
+    }
+  }, [isCompleted, isPredictionInProgress, inputHistory, prediction, predictionMethod, token]);
+
+  // Keep the ref updated with the latest handleKeyPress function
+  useEffect(() => {
+    handleKeyPressRef.current = handleKeyPress;
+  }, [handleKeyPress]);
+
+  // Update chart when score changes (separate from score calculation)
+  useEffect(() => {
+    if (score.total > 0) {
+      const unpredictabilityPercent = Math.round((1 - score.correct / score.total) * 100);
+      setUnpredictabilityHistory(prevHistory => {
+        // Only add if this is a new entry (prevent duplicates)
+        if (prevHistory.length < score.total) {
+          return [...prevHistory, unpredictabilityPercent];
+        }
+        return prevHistory;
+      });
+    }
+  }, [score.total, score.correct]);
+
+
 
   const handleMethodSelect = async (method) => {
     setPredictionMethod(method);
@@ -131,7 +302,6 @@ const GamePage = () => {
     
     // Get initial prediction for the new method (only if no digits typed yet)
     if (inputHistory.length === 0) {
-      setIsInitialLoading(true);
       try {
         const data = await authService.predict({ 
           history: '',
@@ -144,8 +314,6 @@ const GamePage = () => {
         console.error('Error fetching initial prediction:', error);
         setPrediction('?');
         initialPredictionMade.current = true;
-      } finally {
-        setIsInitialLoading(false);
       }
     }
   };
@@ -163,19 +331,31 @@ const GamePage = () => {
     },
     {
       value: 'transformer',
-      label: 'AI Transformer',
+      label: 'Transformer',
       description: 'Uses a neural network trained on binary sequences to predict the next digit'
     }
   ];
 
   const unpredictabilityRate = score.total > 0 ? (((score.total - score.correct) / score.total) * 100).toFixed(1) : 0;
-  const isHuman = unpredictabilityRate > 40; // If unpredictability is high, you're more "human"
+  const isHuman = unpredictabilityRate >= 50; // If unpredictability is 50% or higher, you're more "human"
+
+  // Add global keyboard listener
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      handleKeyPressRef.current(e);
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []); // Empty dependency array - listener added once, ref keeps it current
 
   // Get initial prediction when component mounts (only when no digits typed)
   React.useEffect(() => {
     if (inputHistory.length === 0 && !initialPredictionMade.current) {
       const getInitialPrediction = async () => {
-        setIsInitialLoading(true);
         try {
           const data = await authService.predict({ 
             history: '',
@@ -188,14 +368,12 @@ const GamePage = () => {
           console.error('Error fetching initial prediction:', error);
           setPrediction('?');
           initialPredictionMade.current = true;
-        } finally {
-          setIsInitialLoading(false);
         }
       };
       
       getInitialPrediction();
     }
-  }, [inputHistory.length, token]); // Removed predictionMethod from dependencies
+  }, [inputHistory.length, token, predictionMethod]);
 
   // Save submission when completed (for authenticated users only)
   React.useEffect(() => {
@@ -259,96 +437,30 @@ const GamePage = () => {
     setScore({ correct: 0, total: 0, predictions: [] });
     setIsPredictionInProgress(false);
     setIsCompleted(false);
-    setIsInitialLoading(false); // Reset initial loading state
+    setShowVerdict(false);
+    setShowHumanText(false);
+    setVerdictStage(0);
+    setUnpredictabilityHistory([]);
+    lastProcessedPosition.current = -1; // Reset position tracking
     // Keep the current prediction method instead of resetting to 'frequency'
     // setPredictionMethod('frequency'); // Removed this line
     setShowMethodDropdown(false);
     setHidePredictions(false); // Reset hide predictions checkbox
-    setCurrentInput(''); // Clear the input field
     initialPredictionMade.current = false; // Reset the ref so initial prediction will be made again
-    // Focus the input after reset using requestAnimationFrame for better mobile support
-    requestAnimationFrame(() => {
-      if (inputRef.current) {
-        inputRef.current.focus();
-      }
-    });
     // Initial prediction will be triggered automatically by useEffect
   };
 
   return (
     <main className="game-main">
       <div className="game-layout">
-        {/* Help Container - Invisible box above input boxes */}
-        <div className="help-container">
-          <div className="help-button-container">
-            <div className="help-button" title="How to Play">
-              <span className="help-icon">?</span>
-              <div className="help-tooltip">
-                <h4>How to Play</h4>
-                <ol>
-                  <li><strong>Choose a prediction method</strong> (Frequency Analysis or Pattern Recognition)</li>
-                  <li><strong>Start typing digits</strong> (0 or 1) in the input box</li>
-                  <li><strong>Watch the AI predict</strong> your next digit based on your pattern</li>
-                  <li><strong>See the results</strong> in real-time - green for correct predictions, red for incorrect</li>
-                  <li><strong>Complete 100 digits</strong> to get your final humanity score!</li>
-                </ol>
-                <p><em>The goal: Be unpredictable! If the AI can't guess your pattern, you're more human.</em></p>
-              </div>
-            </div>
-          </div>
-        </div>
         
-        {/* Top Row - Input, Prediction, and Method */}
-        <div className="top-section">
-          {/* Left - Input and Prediction */}
-          <div className="input-prediction-section">
-            <div className="input-prediction-row">
-              <div className="input-area">
-                <label>User Entry</label>
-                <input
-                  ref={inputRef}
-                  type="tel"
-                  inputMode="numeric"
-                  pattern="[01]"
-                  value={currentInput}
-                  onChange={handleInputChange}
-                  onKeyDown={handleInputKeyDown}
-                  className={`single-digit-input ${isPredictionInProgress ? 'processing' : ''}`}
-                  maxLength="1"
-                  disabled={isCompleted || isPredictionInProgress}
-                  autoFocus
-                />
-              </div>
-              
-              <div className="prediction-area">
-                <label>Prediction</label>
-                <div className="prediction-display">
-                  {isPredictionInProgress || isInitialLoading ? (
-                    <span className="loading">...</span>
-                  ) : hidePredictions && prediction ? (
-                    <span className="hidden-prediction">?</span>
-                  ) : prediction ? (
-                    <span className="prediction">{prediction}</span>
-                  ) : (
-                    <span className="placeholder">-</span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Compact Stats */}
-            <div className="compact-stats">
-              <span>Total: {score.total}</span>
-              <span># Not Predicted: {score.total - score.correct}</span>
-              <span>% Not Predicted: {score.total > 0 ? ((score.total - score.correct) / score.total * 100).toFixed(1) : 0}%</span>
-            </div>
-          </div>
-
-          {/* Right - Prediction Method */}
-          <div className="method-section">
-            <div className="method-selector">
-              <label>Method:</label>
-              <div className="custom-dropdown">
+        {/* Method Selection */}
+        <div className="game-method-section">
+          <div className="game-method-controls">
+            <div className="method-row">
+              <div className="method-controls-group">
+                <label>Method:</label>
+                <div className="custom-dropdown">
                 <button
                   className={`dropdown-button ${inputHistory.length > 0 ? 'disabled' : ''}`}
                   onClick={() => inputHistory.length === 0 && setShowMethodDropdown(!showMethodDropdown)}
@@ -378,87 +490,130 @@ const GamePage = () => {
                     ))}
                   </div>
                 )}
+                </div>
+                
+                <div className="hide-predictions-option">
+                  <label className="checkbox-label">
+                    <input
+                      type="checkbox"
+                      checked={hidePredictions}
+                      onChange={(e) => setHidePredictions(e.target.checked)}
+                      className="hide-predictions-checkbox"
+                    />
+                    Hide Prediction
+                  </label>
+                </div>
+                
+                <div className="help-button-container">
+                  <div className="help-button" title="How to Play">
+                    <span className="help-icon">?</span>
+                    <div className="help-tooltip">
+                      <h4>How to Play</h4>
+                      <ol>
+                        <li><strong>Choose a prediction method</strong> (Frequency Analysis, Pattern Recognition, or Transformer)</li>
+                        <li><strong>Type digits anywhere</strong> (press 0 or 1 keys anywhere on the page)</li>
+                        <li><strong>Watch the AI predict</strong> your next digit based on your pattern</li>
+                        <li><strong>See the results</strong> in real-time - green for correct predictions, red for incorrect</li>
+                        <li><strong>Complete 100 digits</strong> to get your final humanity score!</li>
+                      </ol>
+                      <p><em>The goal: Be unpredictable! If the AI can't guess your pattern, you're more human.</em></p>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
-            
-            <div className="hide-predictions-option">
-              <label className="checkbox-label">
-                <input
-                  type="checkbox"
-                  checked={hidePredictions}
-                  onChange={(e) => setHidePredictions(e.target.checked)}
-                  className="hide-predictions-checkbox"
-                />
-                Hide Prediction
-              </label>
+              
+              {/* Start Over Button */}
+              {score.total > 0 && (
+                <div className="start-over-container">
+                  <button onClick={handleTryAgain} className="reset-btn">
+                    Start Over
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
-
-        {/* Bottom Row - History Window */}
-        <div className="history-section">
+        
+        {/* Grid Section */}
+        <div className="grid-section">
           <div className="history-display">
             <div className="history-comparison">
-              <div className="history-row">
-                <div className="history-label">User Entry:</div>
-                <div className="history-digits user-digits">
-                  {Array.from({ length: 100 }, (_, index) => {
-                    const digit = inputHistory[index];
-                    return (
-                      <span 
-                        key={index} 
-                        className={`digit grid-cell ${digit ? 'filled' : 'empty'}`}
-                      >
-                        {digit || ''}
-                      </span>
-                    );
-                  })}
+              {Array.from({ length: 2 }, (_, rowIndex) => (
+                <div key={rowIndex} className="history-row-pair">
+                  {/* User Entry Row */}
+                  <div className="history-row">
+                    <div className="history-label">{rowIndex === 0 ? "User Entry:" : ""}</div>
+                    <div className="history-spacer"></div>
+                    <div className="history-digits user-digits">
+                      {Array.from({ length: 50 }, (_, colIndex) => {
+                        const index = rowIndex * 50 + colIndex;
+                        const digit = inputHistory[index];
+                        return (
+                          <span 
+                            key={index} 
+                            className={`digit grid-cell ${digit ? 'filled' : 'empty'}`}
+                          >
+                            {digit || ''}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  
+                  {/* Prediction Row */}
+                  <div className="history-row">
+                    <div className="history-label">{rowIndex === 0 ? "Predictions:" : ""}</div>
+                    <div className="history-spacer"></div>
+                    <div className="history-digits prediction-digits">
+                      {Array.from({ length: 50 }, (_, colIndex) => {
+                        const index = rowIndex * 50 + colIndex;
+                        const userDigit = inputHistory[index];
+                        // Use stored predictions for past positions, current prediction for next position
+                        const predictedDigit = index < inputHistory.length
+                          ? score.predictions && score.predictions[index] 
+                            ? score.predictions[index]  // Stored prediction for past digits
+                            : null
+                          : index === inputHistory.length && prediction && !isCompleted
+                            ? prediction  // Current prediction for next digit
+                            : null;
+                        
+                        let className = 'digit grid-cell';
+                        let displayContent = '';
+                        
+                        // Show current prediction (for next digit to be typed) or past prediction results
+                        if (index === inputHistory.length && prediction && !isCompleted) {
+                          // This is the next digit position - show current prediction (or hide if checkbox is checked)
+                          className += ' prediction-next';
+                          displayContent = hidePredictions ? '?' : prediction;
+                        } else if (!userDigit && index === 0 && prediction && !isCompleted) {
+                          // Show initial prediction at position 0 before user types anything
+                          className += ' prediction-initial';
+                          displayContent = hidePredictions ? '?' : prediction;
+                        } else if (!userDigit) {
+                          // Empty cell - not filled yet
+                          className += ' empty';
+                          displayContent = '';
+                        } else if (!predictedDigit) {
+                          // No prediction was made for this position
+                          className += ' placeholder';
+                          displayContent = '-';
+                        } else {
+                          // Has both user digit and prediction - show if it was correct
+                          const wasCorrect = predictedDigit === userDigit;
+                          className += wasCorrect ? ' correct' : ' incorrect';
+                          displayContent = predictedDigit;
+                        }
+                        
+                        return (
+                          <span key={index} className={className}>
+                            {displayContent}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
-              </div>
-              <div className="history-row">
-                <div className="history-label">Predictions:</div>
-                <div className="history-digits prediction-digits">
-                  {Array.from({ length: 100 }, (_, index) => {
-                    const userDigit = inputHistory[index];
-                    const predictedDigit = score.predictions && score.predictions[index] 
-                      ? score.predictions[index] 
-                      : null;
-                    
-                    let className = 'digit grid-cell';
-                    let displayContent = '';
-                    
-                    // Show current prediction (for next digit to be typed) or past prediction results
-                    if (index === inputHistory.length && prediction && !isCompleted) {
-                      // This is the next digit position - show current prediction (or hide if checkbox is checked)
-                      className += ' prediction-next';
-                      displayContent = hidePredictions ? '?' : prediction;
-                    } else if (!userDigit && index === 0 && prediction && !isCompleted) {
-                      // Show initial prediction at position 0 before user types anything
-                      className += ' prediction-initial';
-                      displayContent = hidePredictions ? '?' : prediction;
-                    } else if (!userDigit) {
-                      // Empty cell - not filled yet
-                      className += ' empty';
-                      displayContent = '';
-                    } else if (!predictedDigit) {
-                      // No prediction was made for this position
-                      className += ' placeholder';
-                      displayContent = '-';
-                    } else {
-                      // Has both user digit and prediction - show if it was correct
-                      const wasCorrect = predictedDigit === userDigit;
-                      className += wasCorrect ? ' correct' : ' incorrect';
-                      displayContent = predictedDigit;
-                    }
-                    
-                    return (
-                      <span key={index} className={className}>
-                        {displayContent}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
+              ))}
             </div>
           </div>
           <div className="progress-info">
@@ -471,39 +626,84 @@ const GamePage = () => {
             </div>
           </div>
         </div>
+
+        {/* Bottom Section - Stats and Chart */}
+        <div className="game-bottom-section">
+          <div className="stats-chart-container">
+            {/* Stats Section */}
+            <div className="game-stats-section">
+              <div className="game-stats-card">
+                <div className="game-stats-vertical">
+                  <div className="game-stat-row">
+                    <span className="game-stat-label">Total:</span>
+                    <span className="game-stat-number">{score.total}</span>
+                  </div>
+                  <div className="game-stat-row">
+                    <span className="game-stat-label">Not Predicted:</span>
+                    <span className="game-stat-number">{score.total - score.correct}</span>
+                  </div>
+                  <div className="game-stat-row">
+                    <span className="game-stat-label">Unpredictability:</span>
+                    <span className="game-stat-number">{score.total > 0 ? ((score.total - score.correct) / score.total * 100).toFixed(1) : 0}%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Unpredictability Graph */}
+            <div className="game-graph-section">
+              <div className="game-graph-card">
+                <div className="chart-container">
+                  <Line data={chartData} options={chartOptions} />
+                  {/* Chart region labels */}
+                  <div className="chart-label chart-label-robot">ROBOT</div>
+                  <div className="chart-label chart-label-human">HUMAN</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Reset Button */}
-      {score.total > 0 && (
-        <div className="game-controls">
-          <button onClick={handleTryAgain} className="reset-btn">
-            Start Over
-          </button>
-        </div>
-      )}
 
       {/* Final Results */}
       {isCompleted && score.total > 0 && (
         <div id="verdict-section" className="verdict-section">
           <div className={`verdict-card ${isHuman ? 'human' : 'robot'}`}>
-            <h2>The Final Verdict</h2>
-            <div className="verdict-result">
-              {isHuman ? (
-                <>
-                  <span className="verdict-text">You appear to be HUMAN</span>
-                  <span className="verdict-explanation">
-                    You successfully avoided being predictable {unpredictabilityRate}% of the time. Congratulations on your agency! Use it wisely!
+            <div className="verdict-header">
+              {showVerdict && verdictStage >= 1 && (
+                <div className="verdict-main-text">
+                  <span className="verdict-prompt">
+                    You Are A:
                   </span>
-                </>
-              ) : (
-                <>
-                  <span className="verdict-text">You appear to be a ROBOT</span>
-                  <span className="verdict-explanation">
-                    You only avoided being predictable {unpredictabilityRate}% of the time. Are you sure you're human?
-                  </span>
-                </>
+                  {verdictStage >= 2 && (
+                    <div className="stamp-container">
+                      <span className="verdict-label">
+                        {isHuman ? 'HUMAN' : 'ROBOT'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+              {verdictStage >= 3 && (
+                <div className="verdict-tagline">
+                  <em>{isHuman ? 'The chaos within prevails!' : 'Order has triumphed!'}</em>
+                </div>
               )}
             </div>
+            {verdictStage >= 4 && (
+              <div className="verdict-details">
+                <div className="verdict-result">
+                  <span className="verdict-explanation">
+                    {isHuman ? (
+                      <>You outsmarted the model with {unpredictabilityRate}% unpredictability.<br/>Nicely done — free will still has a fighting chance!</>
+                    ) : (
+                      <>The model saw through your moves — only {unpredictabilityRate}% escaped prediction.<br/>Don't worry. Even robots make choices… kind of.</>
+                    )}
+                  </span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

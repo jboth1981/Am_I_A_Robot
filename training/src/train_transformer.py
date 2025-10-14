@@ -67,6 +67,20 @@ def filter_sequences(sequences: List[str], min_length: int = 10, max_length: int
     return filtered
 
 
+def duplicate_sequences(sequences: List[str], duplicate_factor: int = 1) -> List[str]:
+    """
+    Simple duplication: repeat each sequence N times
+    This preserves original human behavior patterns without introducing artificial variations
+    """
+    duplicated = []
+    for seq in sequences:
+        for _ in range(duplicate_factor):
+            duplicated.append(seq)
+    
+    print(f"Duplicated {len(sequences)} -> {len(duplicated)} sequences ({duplicate_factor}x)")
+    return duplicated
+
+
 def augment_sequences(sequences: List[str], augment_factor: int = 15) -> List[str]:
     """
     Aggressively augment sequences by creating many variations
@@ -196,6 +210,7 @@ def main():
     parser.add_argument("--min-length", type=int, default=10, help="Minimum sequence length")
     parser.add_argument("--max-length", type=int, default=100, help="Maximum sequence length")
     parser.add_argument("--augment", type=int, default=1, help="Data augmentation factor")
+    parser.add_argument("--duplicate", type=int, default=1, help="Simple duplication factor (each sequence repeated N times)")
     parser.add_argument("--val-ratio", type=float, default=0.2, help="Validation data ratio")
     
     # Model arguments
@@ -258,7 +273,11 @@ def main():
         print("No sequences remain after filtering!")
         return
     
-    # Augment data if requested
+    # Duplicate sequences if requested (simpler than augmentation)
+    if args.duplicate > 1:
+        sequences = duplicate_sequences(sequences, args.duplicate)
+    
+    # Augment data if requested (alternative to duplication)
     if args.augment > 1:
         sequences = augment_sequences(sequences, args.augment)
     
@@ -289,6 +308,8 @@ def main():
     # Show configuration
     print("\nConfiguration:")
     print(f"  Data source: {args.data_source}")
+    print(f"  Duplication factor: {args.duplicate}x")
+    print(f"  Augmentation factor: {args.augment}x")
     print(f"  Training sequences: {len(train_sequences)}")
     print(f"  Validation sequences: {len(val_sequences) if val_sequences else 0}")
     print(f"  Model dimension: {args.d_model}")

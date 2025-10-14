@@ -17,7 +17,7 @@ COPY transformer_requirements.txt .
 
 # Install transformer training requirements (includes torch, numpy, pandas, etc.)
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch torchvision torchaudio \
+    && pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch==2.4.0 torchvision torchaudio \
     && pip install --no-cache-dir -r transformer_requirements.txt
 
 # Copy training source code

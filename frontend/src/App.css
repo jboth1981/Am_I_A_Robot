@@ -320,7 +320,7 @@ body {
   50% { opacity: 0.7; }
 }
 
-/* Stats Section */
+/* Stats Section (for MainApp.js) */
 .stats-section {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -412,10 +412,125 @@ body {
   color: var(--text-primary);
 }
 
+.verdict-main-text {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 30px;
+  flex-wrap: nowrap;
+  margin-bottom: 20px;
+  width: 100%;
+  max-width: 500px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.verdict-prompt {
+  font-size: 2rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  animation: fadeIn 0.8s ease-out;
+  flex-shrink: 0;
+  margin-top: 20px;
+}
+
+.stamp-container {
+  display: inline-block;
+  position: relative;
+}
+
+.verdict-label {
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  display: inline-block;
+  padding: 15px 25px;
+  position: relative;
+  
+  /* Rubber stamp effect */
+  background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  text-shadow: 
+    2px 2px 0px rgba(0,0,0,0.1),
+    4px 4px 0px rgba(0,0,0,0.05),
+    6px 6px 0px rgba(0,0,0,0.02);
+  
+  /* Rectangular stamp border - default */
+  border: 4px solid #333;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.9);
+  
+  /* Stamp impression effect - increased tilt */
+  transform: rotate(-15deg) scale(1.05);
+  filter: drop-shadow(4px 4px 8px rgba(0,0,0,0.3));
+  
+  /* No animation - instant appearance like a stamp being slammed down */
+}
+
+@keyframes fadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Human stamp - green tinted with green border */
+.verdict-card.human .verdict-label {
+  background: linear-gradient(45deg, #27ae60, #2ecc71);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  border-color: #27ae60;
+}
+
+/* Robot stamp - red tinted with red border */
+.verdict-card.robot .verdict-label {
+  background: linear-gradient(45deg, #e74c3c, #c0392b);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  border-color: #e74c3c;
+}
+
+@keyframes stampEffect {
+  0% {
+    transform: rotate(-20deg) scale(0.7);
+    opacity: 0;
+  }
+  50% {
+    transform: rotate(-10deg) scale(1.15);
+    opacity: 0.8;
+  }
+  100% {
+    transform: rotate(-15deg) scale(1.05);
+    opacity: 1;
+  }
+}
+
+.verdict-tagline {
+  font-size: 1.4rem;
+  font-style: italic;
+  font-weight: 400;
+  display: block;
+  text-align: center;
+  margin-top: 50px;
+  margin-bottom: 40px;
+  animation: fadeIn 0.8s ease-out;
+}
+
 .verdict-explanation {
   font-size: 1.1rem;
   color: var(--text-secondary);
-  max-width: 400px;
+  max-width: 600px;
 }
 
 .try-again-btn {
@@ -514,7 +629,16 @@ body {
   font-weight: 700;
   color: var(--text-primary);
   text-align: center;
+  margin-bottom: 10px;
+}
+
+.project-tagline {
+  font-size: 1.2rem;
+  font-style: italic;
+  color: var(--text-secondary);
+  text-align: center;
   margin-bottom: 40px;
+  font-weight: 300;
 }
 
 .about-section {
@@ -1240,7 +1364,7 @@ body {
 .game-main {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 5px 20px 20px 20px;
   position: relative;
 }
 
@@ -1344,8 +1468,8 @@ body {
 .game-layout {
   display: flex;
   flex-direction: column;
-  gap: 30px;
-  margin-bottom: 30px;
+  gap: 15px;
+  margin-bottom: 15px;
 }
 
 /* Help Container - Invisible box above input boxes */
@@ -1377,7 +1501,7 @@ body {
 
 .history-display {
   background: rgba(248, 249, 250, 0.3);
-  border: 1px solid rgba(225, 232, 237, 0.3);
+  border: 2px solid #d0d7de;
   border-radius: 4px;
   padding: 12px;
   min-height: 100px;
@@ -1390,20 +1514,104 @@ body {
 .history-comparison {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
+
+.history-row-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
 
 .history-row {
   display: flex;
-  flex-direction: column;
-  gap: 2px;
+  flex-direction: row;
+  align-items: center;
+  gap: 15px;
+}
+
+.history-digits {
+  display: grid;
+  grid-template-columns: repeat(50, 20px);
+  gap: 1px;
+}
+
+.grid-cell {
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #e1e8ed;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.user-digits .grid-cell {
+  background: #f8f9fa;
+}
+
+.user-digits .grid-cell.filled {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.prediction-digits .grid-cell {
+  background: #f8f9fa;
+}
+
+.prediction-digits .grid-cell.correct {
+  background: #d4edda;
+  color: #155724;
+}
+
+.prediction-digits .grid-cell.incorrect {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.prediction-digits .grid-cell.prediction-next {
+  background: #fff3cd;
+  color: #856404;
+  border: 2px solid #ffc107;
+}
+
+.prediction-digits .grid-cell.prediction-initial {
+  background: #e2e3e5;
+  color: #6c757d;
+}
+
+.prediction-digits .grid-cell.empty {
+  background: #f8f9fa;
+  color: #ccc;
+}
+
+.prediction-digits .grid-cell.placeholder {
+  background: #f8f9fa;
+  color: #999;
 }
 
 .history-label {
   font-size: 0.8rem;
   font-weight: 600;
   color: var(--text-secondary);
+  width: 80px;
+  flex-shrink: 0;
   font-family: inherit;
+  white-space: nowrap;
+}
+
+.history-spacer {
+  width: 15px;
+  flex-shrink: 0;
+}
+
+.history-label-spacer {
+  width: 95px; /* Match exactly: 80px label + 15px gap */
+  flex-shrink: 0;
 }
 
 .history-digits {
@@ -1679,6 +1887,10 @@ body {
   border: 1px solid #e1e8ed;
 }
 
+/* ========================================
+   METHOD SELECTION COMPONENTS
+   ======================================== */
+
 /* Method Section */
 .method-section {
   background: var(--card-bg);
@@ -1694,10 +1906,51 @@ body {
   gap: 10px;
 }
 
-.method-selector label {
+.method-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+}
+
+.method-row label {
   font-size: 1rem;
   font-weight: 600;
   color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+}
+
+.method-controls-group {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.hide-predictions-option {
+  margin: 0;
+}
+
+.start-over-container {
+  margin: 0;
+}
+
+.hide-predictions-option .checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.hide-predictions-checkbox {
+  margin: 0;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary-blue);
+  cursor: pointer;
 }
 
 /* Custom Dropdown Styles */
@@ -1821,13 +2074,7 @@ body {
   visibility: visible;
 }
 
-/* Hide Predictions Option */
-.hide-predictions-option {
-  margin-top: 15px;
-  padding-top: 15px;
-  border-top: 1px solid #e1e8ed;
-}
-
+/* General Checkbox Styles */
 .checkbox-label {
   display: flex;
   align-items: center;
@@ -1836,13 +2083,6 @@ body {
   color: var(--text-primary);
   cursor: pointer;
   user-select: none;
-}
-
-.hide-predictions-checkbox {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--primary-blue);
-  cursor: pointer;
 }
 
 .hidden-prediction {
@@ -1881,11 +2121,189 @@ body {
   50% { opacity: 0.5; }
 }
 
+/* Game Page Bottom Section */
+.game-bottom-section {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Stats and Chart Container */
+.stats-chart-container {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  width: 100%;
+}
+
+/* Game Page Stats Section */
+.game-stats-section {
+  flex: 0 0 200px; /* Fixed width */
+}
+
+.game-stats-card {
+  background: var(--card-bg);
+  padding: 20px; /* Equal padding on all sides */
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  border: 1px solid #f0f0f0;
+  width: 100%; /* Fill the fixed width container */
+  height: 180px; /* Match chart height for consistency */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Game Page Graph Section */
+.game-graph-section {
+  flex: 1; /* Take remaining space */
+  display: flex;
+  align-items: flex-start; /* Align with top of stats card */
+}
+
+.game-graph-card {
+  background: var(--card-bg);
+  padding: 20px; /* Equal padding on all sides */
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow);
+  border: 1px solid #f0f0f0;
+  width: 100%; /* Fill the remaining space */
+  height: 180px; /* Increased height for better chart spacing */
+  display: flex;
+  flex-direction: column;
+}
+
+.graph-header {
+  margin-bottom: 10px;
+}
+
+.graph-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.chart-container {
+  flex: 1;
+  height: 140px; /* Chart area: 180px - 40px padding = 140px */
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Chart region labels */
+.chart-label {
+  position: absolute;
+  font-size: 14px;
+  font-weight: bold;
+  color: #666666;
+  pointer-events: none; /* Don't interfere with chart interactions */
+  z-index: 10;
+}
+
+.chart-label-robot {
+  bottom: 25px; /* Position 25px from bottom */
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.chart-label-human {
+  top: 8px; /* Position 8px from top */
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.game-stats-header {
+  margin-bottom: 15px;
+}
+
+.game-stats-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+  text-align: center;
+}
+
+.game-stats-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.game-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  gap: 20px;
+}
+
+.game-stat-label {
+  flex: 0 0 120px; /* Fixed width for labels */
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
+.game-stat-number {
+  flex: 0 0 50px; /* Fixed width for numbers */
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--primary-blue);
+}
+
+/* ========================================
+   GAME PAGE LAYOUT
+   ======================================== */
+
+/* Game Page Method Section */
+.game-method-section {
+  flex: 0 0 auto;
+  min-width: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  box-shadow: none;
+  margin-bottom: 10px;
+}
+
+.game-method-section + .grid-section .history-display {
+  border-top: 2px solid #d0d7de;
+}
+
+.game-method-controls {
+  width: 100%;
+  max-width: 100%;
+}
+
 /* Game Page Responsive Design */
 @media (max-width: 768px) {
   .top-section {
     grid-template-columns: 1fr;
     gap: 20px;
+  }
+  
+  .game-bottom-section {
+    gap: 15px;
+  }
+  
+  .stats-chart-container {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .game-stats-card {
+    width: 100%; /* Full width on mobile */
+  }
+  
+  .game-graph-card {
+    width: 100%;
+  }
+  
+  .game-method-controls {
+    width: 100%;
   }
   
   .input-prediction-row {

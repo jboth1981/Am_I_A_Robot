@@ -13,7 +13,7 @@ function MainApp() {
   const [score, setScore] = useState({ correct: 0, total: 0 });
   const [isTyping, setIsTyping] = useState(false);
   const [isCompleted, setIsCompleted] = useState(false);
-  const [predictionMethod, setPredictionMethod] = useState('frequency');
+  const [predictionMethod, setPredictionMethod] = useState('transformer');
   const { user, token, logout, isGuest } = useAuth();
 
   // Handle page changes from sidebar
@@ -137,7 +137,7 @@ function MainApp() {
   };
 
   const accuracy = score.total > 0 ? ((score.correct / score.total) * 100).toFixed(1) : 0;
-  const isHuman = accuracy < 60; // If accuracy is low, you're more "human"
+  const isHuman = accuracy < 50; // If accuracy is low, you're more "human"
 
   // Save submission when completed (for authenticated users only)
   React.useEffect(() => {
@@ -225,7 +225,7 @@ function MainApp() {
                   >
                     <option value="frequency">Frequency Analysis</option>
                     <option value="pattern">Pattern Recognition</option>
-                    <option value="transformer">AI Transformer</option>
+                    <option value="transformer">Transformer</option>
                   </select>
                   <div className="method-description">
                     {predictionMethod === 'frequency' && (
@@ -315,17 +315,17 @@ function MainApp() {
                       {isHuman ? (
                         <>
                           <span className="verdict-icon">Human</span>
-                          <span className="verdict-text">You appear to be HUMAN</span>
+                          <span className="verdict-text">{isHuman ? 'The chaos within prevails.' : 'Order has triumphed.'}</span>
                           <span className="verdict-explanation">
-                            Your pattern shows predictable human behavior. You have free will, but it's not as random as you think!
+                            You outsmarted the model with {accuracy}% unpredictability.<br/>Nicely done — free will still has a fighting chance!
                           </span>
                         </>
                       ) : (
                         <>
                           <span className="verdict-icon">Robot</span>
-                          <span className="verdict-text">You appear to be a ROBOT</span>
+                          <span className="verdict-text">{isHuman ? 'The chaos within prevails.' : 'Order has triumphed.'}</span>
                           <span className="verdict-explanation">
-                            Your pattern is too predictable for a human. Are you sure you're not a machine?
+                            The model saw through your moves — only {accuracy}% escaped prediction. Don't worry. Even robots make choices… kind of.
                           </span>
                         </>
                       )}

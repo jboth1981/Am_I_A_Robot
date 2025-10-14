@@ -159,6 +159,20 @@ case "${1:-help}" in
             --output-dir /app/models
         ;;
     
+    "duplicate-train")
+        check_database
+        local duplicate_factor=${2:-100}
+        echo -e "${YELLOW}Training with ${duplicate_factor}x duplication${NC}"
+        docker-compose -f docker-compose.yml run --rm transformer-training \
+            python -m src.train_transformer \
+            --epochs 60 \
+            --batch-size 4 \
+            --learning-rate 0.005 \
+            --duplicate $duplicate_factor \
+            --model-name duplicated_model \
+            --output-dir /app/models
+        ;;
+    
     "advanced-train")
         check_database
         echo -e "${YELLOW}Advanced training (100 epochs, large model)${NC}"
@@ -188,11 +202,26 @@ case "${1:-help}" in
         check_database
         echo -e "${YELLOW}GPU training (requires nvidia-docker)${NC}"
         docker-compose -f docker-compose.yml --profile training-gpu run --rm transformer-training-gpu \
-            python -m src.train_transformer \
+            python3 -m src.train_transformer \
             --device cuda \
             --epochs ${2:-100} \
             --batch-size ${3:-64} \
             --model-name gpu_model \
+            --output-dir /app/models
+        ;;
+    
+    "gpu-duplicate-train")
+        check_database
+        local duplicate_factor=${2:-50}
+        echo -e "${YELLOW}GPU training with ${duplicate_factor}x duplication${NC}"
+        docker-compose -f docker-compose.yml --profile training-gpu run --rm transformer-training-gpu \
+            python3 -m src.train_transformer \
+            --device cuda \
+            --epochs 60 \
+            --batch-size 8 \
+            --learning-rate 0.005 \
+            --duplicate $duplicate_factor \
+            --model-name gpu_duplicated_model \
             --output-dir /app/models
         ;;
     
@@ -216,9 +245,11 @@ case "${1:-help}" in
         echo "  extract               - Extract training data from database"
         echo "  train [epochs] [batch] [name] - Train model with custom parameters"
         echo "  quick-train           - Quick training (20 epochs, small model)"
+        echo "  duplicate-train [N]   - Training with Nx duplication (default: 100x)"
         echo "  deploy [model_name]   - Deploy trained model to backend"
         echo "  advanced-train        - Advanced training (100 epochs, large model)"
         echo "  gpu-train [epochs] [batch] - GPU training (requires nvidia-docker)"
+        echo "  gpu-duplicate-train [N] - GPU training with Nx duplication (default: 50x)"
         echo "  test [model_path]     - Test a trained model"
         echo "  interactive [model]   - Interactive prediction mode"
         echo "  benchmark [model]     - Benchmark model against simple methods"
@@ -228,6 +259,8 @@ case "${1:-help}" in
         echo "Examples:"
         echo "  $0 setup              # Initial setup"
         echo "  $0 quick-train        # Quick training session"
+        echo "  $0 duplicate-train 100 # Training with 100x duplication"
+        echo "  $0 gpu-duplicate-train 50 # GPU training with 50x duplication"
         echo "  $0 train 50 16 my_model  # Custom training"
         echo "  $0 test models/my_model.pth  # Test specific model"
         echo "  $0 interactive        # Interactive mode with default model"

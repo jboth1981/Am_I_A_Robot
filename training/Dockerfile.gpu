@@ -1,7 +1,7 @@
 # Dockerfile for GPU-accelerated Transformer Training
 # This creates a container with CUDA support for faster training
 
-FROM pytorch/pytorch:2.1.0-cuda11.8-cudnn8-runtime
+FROM nvcr.io/nvidia/pytorch:25.04-py3
 
 WORKDIR /app
 
@@ -15,17 +15,19 @@ RUN apt-get update && apt-get install -y \
 # Copy requirements
 COPY transformer_requirements.txt .
 
-# Install additional requirements (excluding torch)
+# Install additional requirements
 RUN pip install --no-cache-dir --upgrade pip \
-    && grep -v "torch" transformer_requirements.txt | pip install --no-cache-dir -r /dev/stdin
+    && pip install --no-cache-dir -r transformer_requirements.txt
 
 # Copy training source code
 COPY src/ /app/src/
 
-# Set environment variables
+# Set environment variables for RTX 5060 compatibility
 ENV PYTHONPATH=/app/src:/app/shared_model:/app/backend_app
 ENV PYTHONUNBUFFERED=1
 ENV CUDA_VISIBLE_DEVICES=0
+ENV TORCH_CUDA_ARCH_LIST="12.0"
+ENV FORCE_CUDA=1
 
 # Default command
 CMD ["python", "-m", "src.train_transformer", "--device", "cuda", "--help"]
