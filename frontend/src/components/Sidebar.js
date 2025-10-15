@@ -7,11 +7,12 @@ const Sidebar = ({ currentPage, onPageChange, onAuthAction }) => {
   const navigate = useNavigate();
 
   const menuItems = [
-    { id: 'play', label: 'Play', path: '/play' },
-    { id: 'about', label: 'About', path: '/about' },
-    // Add more menu items here as needed
-    // { id: 'stats', label: 'Statistics', path: '/stats' },
-    // { id: 'leaderboard', label: 'Leaderboard', path: '/leaderboard' },
+  	{ id: 'play', label: 'Play', path: '/play' },
+  	// Show Stats only for authenticated users (not guests)
+  	...(user && !isGuest ? [{ id: 'stats', label: 'Stats', path: '/stats' }] : []),
+  	{ id: 'about', label: 'About', path: '/about' },
+  	// Add more menu items here as needed
+  	// { id: 'leaderboard', label: 'Leaderboard', path: '/leaderboard' },
   ];
 
 

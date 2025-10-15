@@ -6,11 +6,12 @@ import MainLayout from './layouts/MainLayout';
 import HomePage from './pages/HomePage';
 import GamePage from './pages/GamePage';
 import AboutPage from './pages/AboutPage';
+import StatsPage from './pages/StatsPage';
 import AuthPage from './pages/AuthPage';
 
 // Component that handles auth logic and routing
 function AppContent() {
-  const { loading, canAccessApp } = useAuth();
+  const { loading, canAccessApp, isGuest } = useAuth();
   const [resetToken, setResetToken] = useState(null);
   const [showResetForm, setShowResetForm] = useState(false);
 
@@ -112,6 +113,16 @@ function AppContent() {
         element={
           <MainLayout>
             <AboutPage />
+          </MainLayout>
+        } 
+      />
+      
+      {/* Stats route - authenticated users only */}
+      <Route 
+        path="/stats" 
+        element={
+          <MainLayout>
+            {canAccessApp && !isGuest ? <StatsPage /> : <Navigate to="/auth" replace />}
           </MainLayout>
         } 
       />

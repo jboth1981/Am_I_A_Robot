@@ -15,6 +15,8 @@ const MainLayout = ({ children }) => {
         return 'landing';
       case '/play':
         return 'play';
+      case '/stats':
+        return 'stats';
       case '/about':
         return 'about';
       case '/auth':

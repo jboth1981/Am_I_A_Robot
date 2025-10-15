@@ -46,7 +46,14 @@ const GamePage = () => {
   const initialPredictionMade = useRef(false);
   const handleKeyPressRef = useRef();
   const lastProcessedPosition = useRef(-1);
+  const mobileInputRef = useRef(null);
   const { user, token } = useAuth();
+  // Ensure a focusable input exists for mobile keyboards
+  useEffect(() => {
+    if (mobileInputRef && mobileInputRef.current) {
+      mobileInputRef.current.focus();
+    }
+  }, []);
 
   // Chart configuration constants
   const CHART_COLORS = {
@@ -452,7 +459,32 @@ const GamePage = () => {
 
   return (
     <main className="game-main">
-      <div className="game-layout">
+      <div 
+        className="game-layout"
+        onClick={() => mobileInputRef.current && mobileInputRef.current.focus()}
+        onTouchStart={() => mobileInputRef.current && mobileInputRef.current.focus()}
+      >
+        {/* Invisible offscreen input to trigger the on-screen keyboard on mobile */}
+        <input
+          id="mobile-binary-input"
+          ref={mobileInputRef}
+          autoFocus
+          inputMode="numeric"
+          pattern="[01]*"
+          onKeyDown={handleKeyPress}
+          onBlur={() => mobileInputRef.current && mobileInputRef.current.focus()}
+          aria-hidden="true"
+          style={{
+            position: 'absolute',
+            left: '-9999px',
+            width: 1,
+            height: 1,
+            opacity: 0,
+            border: 0,
+            padding: 0,
+            outline: 'none'
+          }}
+        />
         
         {/* Method Selection */}
         <div className="game-method-section">

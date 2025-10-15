@@ -45,6 +45,8 @@ services:
   backend:
     build:
       context: ./backend
+      args:
+        INSTALL_TRANSFORMER_INFERENCE: "true"
     container_name: fastapi_backend
     expose:
       - "8000"
@@ -62,6 +64,8 @@ services:
       - PYTHONDONTWRITEBYTECODE=1
     volumes:
       - ./backend:/app
+      - ./shared_model:/app/shared_model
+      - ./models:/app/models
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     deploy:
       resources:
