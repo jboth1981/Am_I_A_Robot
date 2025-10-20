@@ -74,24 +74,30 @@ async function predict(data, token) {
   });
 }
 
-async function saveSubmission(submissionData, token) {
+async function saveSubmission(submissionData, token = null) {
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  
+  // Only add auth header if token exists
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  
   return request('/submissions/', {
     method: 'POST',
     body: JSON.stringify(submissionData),
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`,
-    },
+    headers,
   });
 }
 
-async function getUserSubmissions(token, limit = 10) {
-  return request(`/submissions/?limit=${limit}`, {
-    method: 'GET',
+async function getUserSubmissions(token, limit = 50) {
+  const response = await request(`/submissions/?limit=${limit}`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
   });
+  return response;
 }
 
 export const authService = { 

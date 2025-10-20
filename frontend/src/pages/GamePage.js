@@ -47,7 +47,7 @@ const GamePage = () => {
   const handleKeyPressRef = useRef();
   const lastProcessedPosition = useRef(-1);
   const mobileInputRef = useRef(null);
-  const { user, token } = useAuth();
+  const { user, token, isGuest } = useAuth();
   // Ensure a focusable input exists for mobile keyboards
   useEffect(() => {
     if (mobileInputRef && mobileInputRef.current) {
@@ -382,9 +382,9 @@ const GamePage = () => {
     }
   }, [inputHistory.length, token, predictionMethod]);
 
-  // Save submission when completed (for authenticated users only)
+  // Save submission when completed (for both authenticated and guest users)
   React.useEffect(() => {
-    if (isCompleted && score.total > 0 && user && token) {
+    if (isCompleted && score.total > 0) {
       const saveSubmissionData = async () => {
         try {
           const submissionData = {
@@ -392,12 +392,20 @@ const GamePage = () => {
             prediction_method: predictionMethod,
             total_predictions: score.total,
             correct_predictions: score.correct,
-            accuracy_percentage: parseFloat((score.correct / score.total * 100).toFixed(1)), // Keep original accuracy for backend
-            is_human_result: isHuman
+            accuracy_percentage: parseFloat((score.correct / score.total * 100).toFixed(1)),
+            is_human_result: isHuman,
+            session_id: (!user || !token) ? `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}` : undefined
           };
           
-          await authService.saveSubmission(submissionData, token);
-          console.log('Submission saved successfully');
+          if (user && token) {
+            // Authenticated user
+            await authService.saveSubmission(submissionData, token);
+            console.log('Submission saved successfully (authenticated user)');
+          } else {
+            // Guest user
+            await authService.saveSubmission(submissionData, null);
+            console.log('Submission saved successfully (guest user)');
+          }
         } catch (error) {
           console.error('Error saving submission:', error);
         }
@@ -405,7 +413,7 @@ const GamePage = () => {
       
       saveSubmissionData();
     }
-  }, [isCompleted, score.total, user, token, inputHistory, predictionMethod, score.correct, unpredictabilityRate, isHuman]);
+  }, [isCompleted, score.total, user, token, isGuest, inputHistory, predictionMethod, score.correct, unpredictabilityRate, isHuman]);
 
   // Scroll to verdict when completed
   React.useEffect(() => {

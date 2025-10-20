@@ -60,7 +60,7 @@ class Submission(Base):
     __tablename__ = "submissions"
     
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)  # NULL for guest users
     binary_sequence = Column(Text, nullable=False)  # The full sequence of 0s and 1s
     prediction_method = Column(String(20), nullable=False)  # 'frequency', 'pattern', or 'transformer'
     total_predictions = Column(Integer, nullable=False)
@@ -74,5 +74,8 @@ class Submission(Base):
     confidence_scores_json = Column(Text, nullable=True)  # JSON string of confidence scores
     average_confidence = Column(Float, nullable=True)  # Average confidence across all predictions
     
-    # Relationship back to user
+    # Guest user fields
+    session_id = Column(String(255), nullable=True)  # Browser session ID for guest users
+    
+    # Relationship back to user (optional for guest users)
     user = relationship("User", back_populates="submissions")

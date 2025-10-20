@@ -54,11 +54,12 @@ class SubmissionCreate(BaseModel):
     predictions_json: Optional[str] = None  # JSON string of all predictions made
     confidence_scores_json: Optional[str] = None  # JSON string of confidence scores
     average_confidence: Optional[float] = None  # Average confidence across all predictions
+    session_id: Optional[str] = None  # For guest users
 
 class SubmissionResponse(BaseModel):
     """Schema for submission data returned by API"""
     id: int
-    user_id: int
+    user_id: Optional[int]  # NULL for guest users
     binary_sequence: str
     prediction_method: str
     total_predictions: int
@@ -69,6 +70,7 @@ class SubmissionResponse(BaseModel):
     predictions_json: Optional[str] = None
     confidence_scores_json: Optional[str] = None
     average_confidence: Optional[float] = None
+    session_id: Optional[str] = None  # For guest users
     
     class Config:
         from_attributes = True

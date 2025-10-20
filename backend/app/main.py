@@ -170,6 +170,28 @@ def get_current_user_from_token(
     
     return user
 
+def get_current_user_optional(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(HTTPBearer(auto_error=False)),
+    db: Session = Depends(get_db)
+) -> Optional[User]:
+    """Get current user if token exists and is valid, otherwise return None for guests"""
+    if not credentials:
+        return None
+    
+    try:
+        username = verify_token(credentials.credentials)
+        if username is None:
+            return None
+        
+        user = db.query(User).filter(User.username == username).first()
+        return user
+    except HTTPException:
+        # Re-raise HTTP exceptions (invalid token) - user should know auth failed
+        raise
+    except Exception:
+        # For any other errors, treat as guest
+        return None
+
 @app.post("/request-password-reset/")
 async def request_password_reset(request: PasswordResetRequest, db: Session = Depends(get_db)):
     """Request a password reset token for the given email"""
@@ -284,14 +306,15 @@ def predict_next(data: InputData):
 @app.post("/submissions/", response_model=SubmissionResponse)
 def create_submission(
     submission_data: SubmissionCreate,
-    current_user: User = Depends(get_current_user_from_token),
+    current_user: Optional[User] = Depends(get_current_user_optional),
     db: Session = Depends(get_db)
 ):
-    """Save a completed submission to the database"""
+    """Save a completed submission to the database (authenticated and guest users)"""
     
     # Create new submission
     db_submission = Submission(
-        user_id=current_user.id,
+        user_id=current_user.id if current_user else None,  # NULL for guest users
+        session_id=submission_data.session_id,
         binary_sequence=submission_data.binary_sequence,
         prediction_method=submission_data.prediction_method,
         total_predictions=submission_data.total_predictions,
@@ -308,6 +331,7 @@ def create_submission(
     db.refresh(db_submission)
     
     return db_submission
+
 
 @app.get("/submissions/", response_model=List[SubmissionResponse])
 def get_user_submissions(
