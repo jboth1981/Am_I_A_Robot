@@ -39,6 +39,13 @@ const GamePage = () => {
   const [isCompleted, setIsCompleted] = useState(false);
 
   const [hidePredictions, setHidePredictions] = useState(false);
+  const [showIntro, setShowIntro] = useState(() => {
+    try {
+      return localStorage.getItem('amiarobot_hide_intro') !== '1';
+    } catch {
+      return true;
+    }
+  });
   const [showVerdict, setShowVerdict] = useState(false);
   const [showHumanText, setShowHumanText] = useState(false);
   const [verdictStage, setVerdictStage] = useState(0); // 0: hidden, 1: "You Are A:", 2: stamp, 3: tagline, 4: full text
@@ -528,6 +535,15 @@ const GamePage = () => {
     // Initial prediction will be triggered automatically by useEffect
   };
 
+  const dismissIntro = () => {
+    setShowIntro(false);
+    try {
+      localStorage.setItem('amiarobot_hide_intro', '1');
+    } catch {
+      // localStorage unavailable (private mode); just hide for this session
+    }
+  };
+
   return (
     <main className="game-main">
       <div 
@@ -573,6 +589,43 @@ const GamePage = () => {
           }}
         />
         
+        {/* Intro / how-to-play (dismissible, shown to first-time visitors) */}
+        {showIntro && (
+          <div className="game-intro">
+            <button
+              className="game-intro-dismiss"
+              onClick={dismissIntro}
+              aria-label="Dismiss instructions"
+            >
+              ✕
+            </button>
+            <h2 className="game-intro-title">Can you out-random a machine?</h2>
+            <p className="game-intro-lead">
+              Type a stream of <strong>0s and 1s</strong> off the top of your head.
+              After every digit, an AI tries to predict what you'll type next. The more
+              often it <em>fails</em>, the more human — the less predictable — you are.
+            </p>
+            <ol className="game-intro-steps">
+              <li>
+                Just start typing <strong>0</strong> or <strong>1</strong>. You can press
+                the keys anywhere on this page (on mobile, tap the grid and use your keyboard).
+              </li>
+              <li>
+                Watch the <strong>Predictions</strong> row: <span className="game-intro-good">green</span> means
+                the AI missed you, <span className="game-intro-bad">red</span> means it guessed right.
+              </li>
+              <li>
+                Reach <strong>100 digits</strong> to get your verdict —
+                <strong> Human</strong> or <strong>Robot</strong>.
+              </li>
+            </ol>
+            <p className="game-intro-hint">
+              There's no “start” button — your first digit begins the game. Pick a
+              prediction method below first if you like.
+            </p>
+          </div>
+        )}
+
         {/* Method Selection */}
         <div className="game-method-section">
           <div className="game-method-controls">
