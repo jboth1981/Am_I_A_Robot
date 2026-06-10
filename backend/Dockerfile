@@ -16,7 +16,18 @@ COPY inference_requirements.txt ./
 
 RUN pip install --no-cache-dir --upgrade pip \
   && pip install --no-cache-dir bcrypt==4.3.0 \
-  && pip install --no-cache-dir fastapi uvicorn sqlalchemy psycopg2-binary python-jose[cryptography] passlib[bcrypt] python-multipart email-validator httpx \
+  && pip install --no-cache-dir \
+       fastapi==0.119.0 \
+       uvicorn==0.37.0 \
+       sqlalchemy==2.0.44 \
+       psycopg2-binary==2.9.11 \
+       python-jose[cryptography]==3.5.0 \
+       passlib[bcrypt]==1.7.4 \
+       python-multipart==0.0.20 \
+       email-validator==2.3.0 \
+       httpx==0.28.1 \
+       pydantic==2.12.2 \
+       slowapi==0.1.9 \
   && if [ "$INSTALL_TRANSFORMER_INFERENCE" = "true" ]; then \
        pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cpu torch torchvision torchaudio \
        && pip install --no-cache-dir -r inference_requirements.txt ; \

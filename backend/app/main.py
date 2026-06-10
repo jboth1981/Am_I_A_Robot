@@ -2,10 +2,14 @@ from fastapi import FastAPI, Request, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import Optional, List
 from datetime import timedelta, datetime
 import os
+
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 # Import our custom modules
 from app.models import User, PasswordResetToken, Submission, Base
@@ -17,6 +21,26 @@ from app.auth import create_access_token, verify_token, ACCESS_TOKEN_EXPIRE_MINU
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Am I A Robot API", version="1.0.0")
+
+
+def client_ip(request: Request) -> str:
+    """Identify the real client behind the nginx reverse proxy.
+
+    All requests reach the backend from the proxy's internal Docker IP, so
+    rate limiting on request.client.host alone would lump every visitor into a
+    single bucket. The proxy forwards the originating IP in X-Forwarded-For.
+    """
+    forwarded = request.headers.get("x-forwarded-for")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    return get_remote_address(request)
+
+
+# Rate limiting (per client IP). Limits are generous so normal use never trips
+# them; they exist to blunt credential stuffing and password-reset spam.
+limiter = Limiter(key_func=client_ip)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Security
 security = HTTPBearer()
@@ -39,6 +63,13 @@ class InputData(BaseModel):
     history: str  # e.g., "01101"
     method: str = "frequency"  # "frequency", "pattern", or "transformer"
     temperature: float = 1.0  # For transformer sampling
+
+    @field_validator("history")
+    @classmethod
+    def history_must_be_binary(cls, v: str) -> str:
+        if v and any(c not in "01" for c in v):
+            raise ValueError("history must contain only the characters '0' and '1'")
+        return v
 
 def predict_frequency(history: str) -> str:
     """Simple frequency-based prediction: predict most frequent digit"""
@@ -75,7 +106,8 @@ def predict_pattern(history: str) -> str:
 
 # Authentication endpoints
 @app.post("/register/", response_model=UserResponse)
-def register_user(user: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+def register_user(request: Request, user: UserCreate, db: Session = Depends(get_db)):
     """Register a new user account"""
     # Check if user already exists
     db_user = db.query(User).filter(
@@ -103,7 +135,8 @@ def register_user(user: UserCreate, db: Session = Depends(get_db)):
     return db_user
 
 @app.post("/login/", response_model=Token)
-def login_user(user: UserLogin, db: Session = Depends(get_db)):
+@limiter.limit("30/minute")
+def login_user(request: Request, user: UserLogin, db: Session = Depends(get_db)):
     """Login user and return JWT token"""
     # Find user
     db_user = db.query(User).filter(User.username == user.username).first()
@@ -193,10 +226,11 @@ def get_current_user_optional(
         return None
 
 @app.post("/request-password-reset/")
-async def request_password_reset(request: PasswordResetRequest, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+async def request_password_reset(request: Request, reset_request: PasswordResetRequest, db: Session = Depends(get_db)):
     """Request a password reset token for the given email"""
     # Find user by email
-    user = db.query(User).filter(User.email == request.email).first()
+    user = db.query(User).filter(User.email == reset_request.email).first()
     
     if not user:
         # Don't reveal if email exists or not for security

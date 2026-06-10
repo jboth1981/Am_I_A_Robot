@@ -1,12 +1,17 @@
-fastapi
-uvicorn[standard]
-sqlalchemy
-psycopg2-binary
-python-jose[cryptography]
-passlib[bcrypt]
-python-multipart
-email-validator
-httpx
+# NOTE: The production image (backend/Dockerfile) installs these via an inline
+# pip list, not this file. Keep the pins here in sync with the Dockerfile so
+# local/non-Docker installs match what runs in production.
+fastapi==0.119.0
+uvicorn==0.37.0
+sqlalchemy==2.0.44
+psycopg2-binary==2.9.11
+python-jose[cryptography]==3.5.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.20
+email-validator==2.3.0
+httpx==0.28.1
+pydantic==2.12.2
+slowapi==0.1.9
 bcrypt==4.3.0
 
 # Transformer dependencies

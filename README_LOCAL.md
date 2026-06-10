@@ -146,8 +146,7 @@ Am_I_A_Robot/
 ├── docker-compose.local.yml    # Local development configuration
 ├── docker-compose.production.yml # Production configuration
 ├── README_LOCAL.md             # This file - local development guide
-├── DEPLOYMENT.md               # Production deployment guide
-└── agent_instructions.txt     # AI assistant context
+└── DEPLOYMENT.md               # Production deployment guide
 ```
 
 ---
@@ -178,3 +177,7 @@ Am_I_A_Robot/
 ---
 
 **Your local environment now perfectly matches production with HTTPS, hot reload, and secure WebSocket connections!** 🚀 
+
+# Deployment:
+# I'm using a DigitalOcean droplet to host this: ssh root@159.203.30.217
+# Deploy under user "deploy"

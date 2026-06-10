@@ -18,6 +18,7 @@ services:
           memory: 128M
     networks:
       - web
+    restart: unless-stopped
 
   nginx-proxy-acme:
     image: jrcs/letsencrypt-nginx-proxy-companion
@@ -39,6 +40,7 @@ services:
           memory: 64M
     networks:
       - web
+    restart: unless-stopped
     profiles:
       - production
 
@@ -66,7 +68,7 @@ services:
       - ./backend:/app
       - ./shared_model:/app/shared_model
       - ./models:/app/models
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
     deploy:
       resources:
         limits:
@@ -77,6 +79,7 @@ services:
       - database
     networks:
       - web
+    restart: unless-stopped
 
   frontend:
     build:
@@ -102,10 +105,9 @@ services:
           memory: 512M
         reservations:
           memory: 256M
-    stdin_open: true
-    tty: true
     networks:
       - web
+    restart: unless-stopped
 
   database:
     image: postgres:15-alpine
