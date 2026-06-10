@@ -28,6 +28,9 @@ cd Am_I_A_Robot
 # Create production environment file
 echo "ENV=production" > .env
 echo "DEFAULT_EMAIL=your-email@example.com" >> .env
+# REQUIRED: a strong random JWT signing secret. If this is missing the backend
+# falls back to a random ephemeral key (sessions reset on every restart).
+echo "SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')" >> .env
 
 # Ensure your domains point to this server's IP
 # amiarobot.ca, www.amiarobot.ca, api.amiarobot.ca → Your Server IP
@@ -69,9 +72,11 @@ docker-compose -f docker-compose.production.yml --profile production up --build 
 - [ ] DNS records point to your server
 - [ ] Ports 80 and 443 are open
 - [ ] `.env` file contains `ENV=production`
+- [ ] `.env` file contains a strong `SECRET_KEY` (JWT signing secret)
 - [ ] Running with `-f docker-compose.production.yml --profile production`
 - [ ] Let's Encrypt certificates are generated
 - [ ] Backend dependencies include `bcrypt==4.3.0` (prevents 500 errors)
+- [ ] Nightly database backup cron is installed (see Database Backups)
 
 ## Important Notes
 
@@ -108,6 +113,25 @@ docker-compose -f docker-compose.production.yml exec nginx-proxy-acme acme.sh --
 - **Keep your server updated**
 - **Monitor logs regularly**
 - **Backup your data**
+
+## Database Backups
+
+The production Postgres data lives in the `postgres_prod_data` Docker volume on a
+single droplet. `scripts/pg_backup.sh` dumps and gzips the database to
+`/home/deploy/backups`, keeping the most recent 14 daily backups.
+
+Install the nightly cron (runs at 03:30 server time):
+```bash
+( crontab -l 2>/dev/null; \
+  echo "30 3 * * * /home/deploy/Projects/Am_I_A_Robot/scripts/pg_backup.sh >> /var/log/amiarobot-backup.log 2>&1" \
+) | crontab -
+```
+
+Restore from a backup:
+```bash
+gunzip -c /home/deploy/backups/amiarobot_YYYYMMDD_HHMMSS.sql.gz \
+  | docker exec -i postgres_production psql -U robot_user -d am_i_a_robot_prod
+```
 
 ## Monitoring
 
