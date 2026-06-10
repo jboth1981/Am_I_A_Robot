@@ -19,7 +19,7 @@ const LandingPage = ({ onAuthAction }) => {
   };
 
   return (
-    <div className="app">
+    <div className="app landing-page">
       <Sidebar 
         currentPage="landing"
         onPageChange={() => {}} // Landing page doesn't navigate away
@@ -63,43 +63,23 @@ const LandingPage = ({ onAuthAction }) => {
                 </p>
               </div>
 
-              <div className="landing-features">
-                <div className="feature-card">
-                  <div className="feature-icon">🎯</div>
-                  <h3>AI Prediction</h3>
-                  <p>Advanced algorithms analyze your input patterns using frequency analysis and pattern recognition.</p>
-                </div>
-                
-                <div className="feature-card">
-                  <div className="feature-icon">📊</div>
-                  <h3>Real-time Results</h3>
-                  <p>Watch as our AI predicts your next move and see how predictable you really are.</p>
-                </div>
-                
-                <div className="feature-card">
-                  <div className="feature-icon">🏆</div>
-                  <h3>Human vs Robot</h3>
-                  <p>After 100 characters, discover whether you exhibit human unpredictability or robot-like patterns.</p>
-                </div>
-              </div>
-
               <div className="landing-how-it-works">
                 <h2>How It Works</h2>
                 <div className="steps">
                   <div className="step">
                     <div className="step-number">1</div>
                     <h4>Enter Your Sequence</h4>
-                    <p>Type 0s and 1s trying to be as unpredictable as possible</p>
+                    <p>Type 0s and 1s trying to be as unpredictable as possible. Humans naturally create patterns even when trying to be random, while true randomness is surprisingly difficult to achieve.</p>
                   </div>
                   <div className="step">
                     <div className="step-number">2</div>
                     <h4>AI Analyzes Patterns</h4>
-                    <p>Our algorithms predict your next digit in real-time</p>
+                    <p>Our transformer neural network analyzes your input patterns in real-time, looking for subtle biases, frequency patterns, and sequential dependencies that reveal human cognitive limitations.</p>
                   </div>
                   <div className="step">
                     <div className="step-number">3</div>
                     <h4>Get Your Verdict</h4>
-                    <p>Discover if you're more human or robot based on predictability</p>
+                    <p>After 100 digits, discover if you're more human or robot based on predictability. The AI calculates an accuracy score - lower scores indicate more human-like unpredictability.</p>
                   </div>
                 </div>
               </div>
@@ -114,7 +94,7 @@ const LandingPage = ({ onAuthAction }) => {
                       className="cta-btn primary"
                       onClick={() => handleAuthAction('register')}
                     >
-                      Sign Up & Save Results
+                      Sign Up
                     </button>
                     <button 
                       className="cta-btn secondary"
@@ -126,7 +106,7 @@ const LandingPage = ({ onAuthAction }) => {
                       className="cta-btn guest"
                       onClick={() => handleAuthAction('guest')}
                     >
-                      🎮 Try as Guest
+                      Try as Guest
                     </button>
                   </div>
                   

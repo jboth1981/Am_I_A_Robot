@@ -55,6 +55,69 @@ const GamePage = () => {
     }
   }, []);
 
+  // Prevent scroll-to-top behavior on mobile when typing
+  useEffect(() => {
+    let scrollPosition = 0;
+    
+    const preventScrollToTop = (e) => {
+      // Prevent default scroll behavior on mobile
+      if (e.target === mobileInputRef.current) {
+        e.preventDefault();
+      }
+    };
+
+    const handleFocus = (e) => {
+      // Prevent page from scrolling to top when input gains focus
+      if (e.target === mobileInputRef.current) {
+        e.preventDefault();
+        // Keep current scroll position
+        scrollPosition = window.scrollY;
+        setTimeout(() => {
+          window.scrollTo(0, scrollPosition);
+        }, 0);
+      }
+    };
+
+    const handleBlur = (e) => {
+      // Maintain scroll position when input loses focus
+      if (e.target === mobileInputRef.current) {
+        scrollPosition = window.scrollY;
+        setTimeout(() => {
+          window.scrollTo(0, scrollPosition);
+        }, 0);
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      // Maintain scroll position during key presses
+      scrollPosition = window.scrollY;
+      setTimeout(() => {
+        window.scrollTo(0, scrollPosition);
+      }, 0);
+    };
+
+    // Prevent scroll restoration
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+
+    if (mobileInputRef.current) {
+      mobileInputRef.current.addEventListener('focus', handleFocus);
+      mobileInputRef.current.addEventListener('blur', handleBlur);
+      mobileInputRef.current.addEventListener('scroll', preventScrollToTop);
+      mobileInputRef.current.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      if (mobileInputRef.current) {
+        mobileInputRef.current.removeEventListener('focus', handleFocus);
+        mobileInputRef.current.removeEventListener('blur', handleBlur);
+        mobileInputRef.current.removeEventListener('scroll', preventScrollToTop);
+        mobileInputRef.current.removeEventListener('keydown', handleKeyDown);
+      }
+    };
+  }, []);
+
   // Chart configuration constants
   const CHART_COLORS = {
     robot: 'rgba(220, 53, 69, 0.1)',    // Light red
@@ -479,18 +542,34 @@ const GamePage = () => {
           autoFocus
           inputMode="numeric"
           pattern="[01]*"
+          autoComplete="off"
+          autoCorrect="off"
+          autoCapitalize="off"
+          spellCheck="false"
           onKeyDown={handleKeyPress}
           onBlur={() => mobileInputRef.current && mobileInputRef.current.focus()}
+          onFocus={(e) => {
+            // Prevent scroll to top on mobile
+            e.preventDefault();
+            const currentScrollY = window.scrollY;
+            // Use requestAnimationFrame for better timing
+            requestAnimationFrame(() => {
+              window.scrollTo(0, currentScrollY);
+            });
+          }}
           aria-hidden="true"
           style={{
-            position: 'absolute',
-            left: '-9999px',
+            position: 'fixed',
+            top: '-1000px',
+            left: '-1000px',
             width: 1,
             height: 1,
             opacity: 0,
             border: 0,
             padding: 0,
-            outline: 'none'
+            outline: 'none',
+            pointerEvents: 'none',
+            transform: 'translateZ(0)'
           }}
         />
         
@@ -578,82 +657,165 @@ const GamePage = () => {
         <div className="grid-section">
           <div className="history-display">
             <div className="history-comparison">
-              {Array.from({ length: 2 }, (_, rowIndex) => (
-                <div key={rowIndex} className="history-row-pair">
-                  {/* User Entry Row */}
-                  <div className="history-row">
-                    <div className="history-label">{rowIndex === 0 ? "User Entry:" : ""}</div>
-                    <div className="history-spacer"></div>
-                    <div className="history-digits user-digits">
-                      {Array.from({ length: 50 }, (_, colIndex) => {
-                        const index = rowIndex * 50 + colIndex;
-                        const digit = inputHistory[index];
-                        return (
-                          <span 
-                            key={index} 
-                            className={`digit grid-cell ${digit ? 'filled' : 'empty'}`}
-                          >
-                            {digit || ''}
-                          </span>
-                        );
-                      })}
+              {/* Desktop: 2 rows of 50 */}
+              <div className="desktop-grid">
+                {Array.from({ length: 2 }, (_, rowIndex) => (
+                  <div key={rowIndex} className="history-row-pair">
+                    {/* User Entry Row */}
+                    <div className="history-row">
+                      <div className="history-label">{rowIndex === 0 ? "User Entry:" : ""}</div>
+                      <div className="history-spacer"></div>
+                      <div className="history-digits user-digits">
+                        {Array.from({ length: 50 }, (_, colIndex) => {
+                          const index = rowIndex * 50 + colIndex;
+                          const digit = inputHistory[index];
+                          return (
+                            <span 
+                              key={index} 
+                              className={`digit grid-cell ${digit ? 'filled' : 'empty'}`}
+                            >
+                              {digit || ''}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    
+                    {/* Prediction Row */}
+                    <div className="history-row">
+                      <div className="history-label">{rowIndex === 0 ? "Predictions:" : ""}</div>
+                      <div className="history-spacer"></div>
+                      <div className="history-digits prediction-digits">
+                        {Array.from({ length: 50 }, (_, colIndex) => {
+                          const index = rowIndex * 50 + colIndex;
+                          const userDigit = inputHistory[index];
+                          // Use stored predictions for past positions, current prediction for next position
+                          const predictedDigit = index < inputHistory.length
+                            ? score.predictions && score.predictions[index] 
+                              ? score.predictions[index]  // Stored prediction for past digits
+                              : null
+                            : index === inputHistory.length && prediction && !isCompleted
+                              ? prediction  // Current prediction for next digit
+                              : null;
+                          
+                          let className = 'digit grid-cell';
+                          let displayContent = '';
+                          
+                          // Show current prediction (for next digit to be typed) or past prediction results
+                          if (index === inputHistory.length && prediction && !isCompleted) {
+                            // This is the next digit position - show current prediction (or hide if checkbox is checked)
+                            className += ' prediction-next';
+                            displayContent = hidePredictions ? '?' : prediction;
+                          } else if (!userDigit && index === 0 && prediction && !isCompleted) {
+                            // Show initial prediction at position 0 before user types anything
+                            className += ' prediction-initial';
+                            displayContent = hidePredictions ? '?' : prediction;
+                          } else if (!userDigit) {
+                            // Empty cell - not filled yet
+                            className += ' empty';
+                            displayContent = '';
+                          } else if (!predictedDigit) {
+                            // No prediction was made for this position
+                            className += ' placeholder';
+                            displayContent = '-';
+                          } else {
+                            // Has both user digit and prediction - show if it was correct
+                            const wasCorrect = predictedDigit === userDigit;
+                            className += wasCorrect ? ' correct' : ' incorrect';
+                            displayContent = predictedDigit;
+                          }
+                          
+                          return (
+                            <span key={index} className={className}>
+                              {displayContent}
+                            </span>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
-                  
-                  {/* Prediction Row */}
-                  <div className="history-row">
-                    <div className="history-label">{rowIndex === 0 ? "Predictions:" : ""}</div>
-                    <div className="history-spacer"></div>
-                    <div className="history-digits prediction-digits">
-                      {Array.from({ length: 50 }, (_, colIndex) => {
-                        const index = rowIndex * 50 + colIndex;
-                        const userDigit = inputHistory[index];
-                        // Use stored predictions for past positions, current prediction for next position
-                        const predictedDigit = index < inputHistory.length
-                          ? score.predictions && score.predictions[index] 
-                            ? score.predictions[index]  // Stored prediction for past digits
-                            : null
-                          : index === inputHistory.length && prediction && !isCompleted
-                            ? prediction  // Current prediction for next digit
-                            : null;
-                        
-                        let className = 'digit grid-cell';
-                        let displayContent = '';
-                        
-                        // Show current prediction (for next digit to be typed) or past prediction results
-                        if (index === inputHistory.length && prediction && !isCompleted) {
-                          // This is the next digit position - show current prediction (or hide if checkbox is checked)
-                          className += ' prediction-next';
-                          displayContent = hidePredictions ? '?' : prediction;
-                        } else if (!userDigit && index === 0 && prediction && !isCompleted) {
-                          // Show initial prediction at position 0 before user types anything
-                          className += ' prediction-initial';
-                          displayContent = hidePredictions ? '?' : prediction;
-                        } else if (!userDigit) {
-                          // Empty cell - not filled yet
-                          className += ' empty';
-                          displayContent = '';
-                        } else if (!predictedDigit) {
-                          // No prediction was made for this position
-                          className += ' placeholder';
-                          displayContent = '-';
-                        } else {
-                          // Has both user digit and prediction - show if it was correct
-                          const wasCorrect = predictedDigit === userDigit;
-                          className += wasCorrect ? ' correct' : ' incorrect';
-                          displayContent = predictedDigit;
-                        }
-                        
-                        return (
-                          <span key={index} className={className}>
-                            {displayContent}
-                          </span>
-                        );
-                      })}
+                ))}
+              </div>
+
+              {/* Mobile: 5 rows of 10 */}
+              <div className="mobile-grid">
+                {Array.from({ length: 5 }, (_, rowIndex) => (
+                  <div key={rowIndex} className="history-row-pair">
+                    {/* User Entry Row */}
+                    <div className="history-row">
+                      <div className="history-label">{rowIndex === 0 ? "User Entry:" : ""}</div>
+                      <div className="history-spacer"></div>
+                      <div className="history-digits user-digits">
+                        {Array.from({ length: 10 }, (_, colIndex) => {
+                          const index = rowIndex * 10 + colIndex;
+                          const digit = inputHistory[index];
+                          return (
+                            <span 
+                              key={index} 
+                              className={`digit grid-cell ${digit ? 'filled' : 'empty'}`}
+                            >
+                              {digit || ''}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    
+                    {/* Prediction Row */}
+                    <div className="history-row">
+                      <div className="history-label">{rowIndex === 0 ? "Predictions:" : ""}</div>
+                      <div className="history-spacer"></div>
+                      <div className="history-digits prediction-digits">
+                        {Array.from({ length: 10 }, (_, colIndex) => {
+                          const index = rowIndex * 10 + colIndex;
+                          const userDigit = inputHistory[index];
+                          // Use stored predictions for past positions, current prediction for next position
+                          const predictedDigit = index < inputHistory.length
+                            ? score.predictions && score.predictions[index] 
+                              ? score.predictions[index]  // Stored prediction for past digits
+                              : null
+                            : index === inputHistory.length && prediction && !isCompleted
+                              ? prediction  // Current prediction for next digit
+                              : null;
+                          
+                          let className = 'digit grid-cell';
+                          let displayContent = '';
+                          
+                          // Show current prediction (for next digit to be typed) or past prediction results
+                          if (index === inputHistory.length && prediction && !isCompleted) {
+                            // This is the next digit position - show current prediction (or hide if checkbox is checked)
+                            className += ' prediction-next';
+                            displayContent = hidePredictions ? '?' : prediction;
+                          } else if (!userDigit && index === 0 && prediction && !isCompleted) {
+                            // Show initial prediction at position 0 before user types anything
+                            className += ' prediction-initial';
+                            displayContent = hidePredictions ? '?' : prediction;
+                          } else if (!userDigit) {
+                            // Empty cell - not filled yet
+                            className += ' empty';
+                            displayContent = '';
+                          } else if (!predictedDigit) {
+                            // No prediction was made for this position
+                            className += ' placeholder';
+                            displayContent = '-';
+                          } else {
+                            // Has both user digit and prediction - show if it was correct
+                            const wasCorrect = predictedDigit === userDigit;
+                            className += wasCorrect ? ' correct' : ' incorrect';
+                            displayContent = predictedDigit;
+                          }
+                          
+                          return (
+                            <span key={index} className={className}>
+                              {displayContent}
+                            </span>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
           <div className="progress-info">

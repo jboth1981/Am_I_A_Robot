@@ -45,6 +45,19 @@ body {
   width: 100%;
 }
 
+/* Mobile container adjustments */
+@media (max-width: 768px) {
+  .container {
+    padding: 2px; /* Minimal padding on mobile - right next to sidebar */
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 1px; /* Almost no padding on small phones - right next to sidebar */
+  }
+}
+
 /* Header */
 .header {
   display: flex;
@@ -712,7 +725,7 @@ body {
 /* Sidebar Styles */
 .sidebar {
   width: 210px;
-  min-height: 100vh;
+  height: 100vh; /* Fixed height to fill viewport */
   background: var(--dark-grey);
   padding: 0;
   display: flex;
@@ -722,6 +735,7 @@ body {
   top: 0;
   z-index: 1000;
   box-shadow: 2px 0 8px rgba(61, 61, 60, 0.1);
+  overflow-y: auto; /* Allow scrolling if content exceeds height */
 }
 
 .sidebar-logo {
@@ -749,6 +763,7 @@ body {
 .sidebar-nav {
   flex: 1;
   padding: 20px 0;
+  overflow-y: auto; /* Allow scrolling if many nav items */
 }
 
 .sidebar-nav-item {
@@ -784,6 +799,8 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  flex-shrink: 0; /* Prevent shrinking */
+  margin-top: auto; /* Push to bottom */
 }
 
 .sidebar-auth-btn {
@@ -825,6 +842,8 @@ body {
   padding: 20px;
   border-top: 1px solid #555;
   color: var(--white);
+  flex-shrink: 0; /* Prevent shrinking */
+  margin-top: auto; /* Push to bottom */
 }
 
 .sidebar-user-info {
@@ -863,6 +882,8 @@ body {
   border-top: 1px solid #555;
   color: var(--white);
   text-align: center;
+  flex-shrink: 0; /* Prevent shrinking */
+  margin-top: auto; /* Push to bottom */
 }
 
 .sidebar-guest-title {
@@ -900,22 +921,59 @@ body {
   margin-left: 210px;
   min-height: 100vh;
   padding: 20px;
+  overflow-y: auto; /* Allow scrolling only when needed */
+}
+
+/* Mobile-specific main content adjustments */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 90px; /* Adjust for much narrower sidebar */
+    padding: 5px; /* Minimal padding - right next to sidebar */
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    margin-left: 75px; /* Adjust for much narrower sidebar */
+    padding: 2px; /* Almost no padding - right next to sidebar */
+  }
 }
 
 /* Landing Page Styles */
+.landing-page {
+  height: 100vh;
+  overflow: hidden; /* Prevent page scrolling */
+  display: flex;
+  flex-direction: column;
+  margin: 0; /* Remove any margins */
+  padding: 0; /* Remove any padding */
+}
+
+.landing-page .main-content {
+  margin: 0; /* Remove any margins */
+  padding: 0; /* Remove any padding */
+}
+
+.landing-page .container {
+  margin: 0; /* Remove any margins */
+  padding: 0; /* Remove any padding */
+}
+
 .landing-hero-simple {
   text-align: center;
-  padding: 80px 40px;
+  padding: 40px 20px;
   background: var(--card-bg);
   border-radius: var(--border-radius);
   box-shadow: var(--shadow);
   border: 1px solid #f0f0f0;
-  margin-bottom: 30px;
-  min-height: 60vh;
+  margin: 0; /* Remove all margins */
+  height: calc(100vh - 100px); /* Full viewport height minus minimal margins */
+  max-height: 600px; /* Cap maximum height */
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  overflow: hidden; /* Prevent scrolling */
 }
 
 .landing-actions {
@@ -1126,12 +1184,13 @@ body {
 
 .cta-btn.primary {
   background: var(--primary-blue);
-  color: var(--dark-grey);
+  color: white; /* White text to match sidebar */
+  border: 2px solid var(--primary-blue);
 }
 
 .cta-btn.primary:hover {
-  background: var(--white);
-  color: var(--dark-grey);
+  background: var(--secondary-blue);
+  color: white; /* Keep white text on hover */
   transform: translateY(-2px);
   box-shadow: var(--shadow-hover);
 }
@@ -1144,7 +1203,7 @@ body {
 
 .cta-btn.secondary:hover {
   background: var(--primary-blue);
-  color: var(--dark-grey);
+  color: white; /* White text on hover to match sidebar */
   transform: translateY(-2px);
   box-shadow: var(--shadow-hover);
 }
@@ -1221,22 +1280,64 @@ body {
 /* Responsive Design */
 @media (max-width: 768px) {
   .sidebar {
-    width: 100%;
-    position: relative;
-    min-height: auto;
+    width: 90px; /* Much narrower sidebar on mobile - about half */
+    height: 100vh; /* Fixed height to fill viewport */
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    overflow-x: hidden; /* Prevent horizontal overflow */
+    overflow-y: auto; /* Allow vertical scrolling if needed */
   }
   
   .main-content {
-    margin-left: 0;
+    margin-left: 90px; /* Adjust for much narrower sidebar */
+  }
+  
+  .sidebar-logo {
+    padding: 10px 5px; /* Reduced padding for narrow sidebar */
   }
   
   .sidebar-logo img {
-    width: 80px;
+    width: 40px; /* Much smaller logo for narrow sidebar */
+    max-width: 100%; /* Ensure it doesn't overflow */
+  }
+  
+  .sidebar-nav {
+    padding: 5px 0; /* Reduced padding */
+  }
+  
+  .sidebar-nav-item {
+    padding: 8px 5px; /* Much reduced padding */
+    font-size: 0.8rem; /* Smaller text */
+    text-align: center; /* Center text in narrow sidebar */
+    white-space: nowrap; /* Prevent text wrapping */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Show ... if text is too long */
   }
   
   .sidebar-auth {
-    flex-direction: row;
-    gap: 10px;
+    flex-direction: column;
+    gap: 5px;
+    padding: 8px 5px; /* Much reduced padding */
+  }
+  
+  .sidebar-auth-btn {
+    padding: 10px 5px; /* Larger buttons for better visibility */
+    font-size: 0.75rem; /* Larger font for readability */
+    text-align: center;
+    white-space: nowrap; /* Prevent text wrapping */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Show ... if text is too long */
+    width: 100%; /* Full width of sidebar */
+  }
+  
+  .sidebar-user-profile {
+    padding: 10px 5px; /* Reduced padding */
+  }
+  
+  .sidebar-guest-notice {
+    padding: 10px 5px; /* Reduced padding */
   }
   
   .landing-title {
@@ -1252,8 +1353,18 @@ body {
   }
   
   .landing-hero-simple {
-    padding: 40px 20px;
-    min-height: 50vh;
+    padding: 15px 5px;
+    height: calc(100vh - 20px); /* Minimal margin on mobile */
+    max-height: none; /* Remove height cap on mobile */
+    margin: 0; /* Remove all margins */
+  }
+}
+
+@media (max-width: 480px) {
+  .landing-hero-simple {
+    padding: 10px 2px;
+    height: calc(100vh - 10px); /* Minimal margin on small phones */
+    margin: 0; /* Remove all margins */
   }
   
   .landing-actions {
@@ -1347,6 +1458,62 @@ body {
 }
 
 @media (max-width: 480px) {
+  .sidebar {
+    width: 75px; /* Even narrower on small phones - about half of 150px */
+    height: 100vh; /* Fixed height to fill viewport */
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    overflow-x: hidden; /* Prevent horizontal overflow */
+    overflow-y: auto; /* Allow vertical scrolling if needed */
+  }
+  
+  .main-content {
+    margin-left: 75px; /* Adjust for much narrower sidebar */
+  }
+  
+  .sidebar-logo {
+    padding: 8px 3px; /* Minimal padding for very narrow sidebar */
+  }
+  
+  .sidebar-logo img {
+    width: 35px; /* Even smaller logo for very narrow sidebar */
+    max-width: 100%; /* Ensure it doesn't overflow */
+  }
+  
+  .sidebar-nav {
+    padding: 3px 0; /* Minimal padding */
+  }
+  
+  .sidebar-nav-item {
+    padding: 6px 3px; /* Minimal padding */
+    font-size: 0.7rem; /* Very small text */
+    text-align: center;
+    white-space: nowrap; /* Prevent text wrapping */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Show ... if text is too long */
+  }
+  
+  .sidebar-auth {
+    padding: 6px 3px; /* Minimal padding */
+  }
+  
+  .sidebar-auth-btn {
+    padding: 8px 3px; /* Larger buttons for better visibility */
+    font-size: 0.7rem; /* Larger font for readability */
+    text-align: center;
+    white-space: nowrap; /* Prevent text wrapping */
+    overflow: hidden;
+    text-overflow: ellipsis; /* Show ... if text is too long */
+    width: 100%; /* Full width of sidebar */
+  }
+  
+  .sidebar-user-profile,
+  .sidebar-guest-notice {
+    padding: 6px 3px; /* Minimal padding */
+  }
+  
   .logo {
     height: 50px;
   }
@@ -1509,12 +1676,17 @@ body {
   font-size: 1rem;
   line-height: 1.2;
   color: var(--text-primary);
+  width: 100%; /* Ensure it takes full width */
+  box-sizing: border-box; /* Include padding/borders in width calculation */
+  overflow: hidden; /* Prevent content from overflowing */
 }
 
 .history-comparison {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  width: 100%; /* Take full width of parent */
+  box-sizing: border-box; /* Include padding/borders in width calculation */
 }
 
 .history-row-pair {
@@ -1538,7 +1710,7 @@ body {
 }
 
 .grid-cell {
-  width: 20px;
+  width: auto; /* Let grid handle sizing */
   height: 20px;
   display: flex;
   align-items: center;
@@ -1548,6 +1720,7 @@ body {
   font-size: 0.8rem;
   font-weight: 600;
   margin: 0;
+  box-sizing: border-box; /* Include borders in sizing */
 }
 
 .user-digits .grid-cell {
@@ -1622,19 +1795,42 @@ body {
   font-size: 0.85rem;
   max-width: 100%;
   line-height: 1;
+  width: 100%; /* Ensure it doesn't exceed container */
+  box-sizing: border-box; /* Include padding/borders in width calculation */
+}
+
+/* Desktop/Mobile Grid Visibility */
+.desktop-grid {
+  display: block;
+}
+
+.mobile-grid {
+  display: none;
 }
 
 @media (max-width: 768px) {
-  .history-digits {
-    grid-template-columns: repeat(25, 1fr);
+  .desktop-grid {
+    display: none;
+  }
+  
+  .mobile-grid {
+    display: block;
+  }
+  
+  .mobile-grid .history-digits {
+    grid-template-columns: repeat(10, 1fr);
+    gap: 2px;
+  }
+  
+  .mobile-grid .grid-cell {
+    width: auto;
+    height: 24px;
+    font-size: 0.7rem;
+    min-width: 20px;
   }
 }
 
-@media (max-width: 480px) {
-  .history-digits {
-    grid-template-columns: repeat(20, 1fr);
-  }
-}
+/* Old mobile grid styles removed - now handled by desktop-grid/mobile-grid classes */
 
 .digit {
   display: inline-block;
@@ -1841,6 +2037,85 @@ body {
     outline: none;
     border-color: var(--secondary-blue);
     box-shadow: 0 0 0 3px rgba(110, 155, 161, 0.1);
+  }
+  
+  /* Prevent mobile scroll-to-top behavior */
+  #mobile-binary-input {
+    position: fixed !important;
+    top: -1000px !important;
+    left: -1000px !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
+    transform: translateZ(0); /* Force hardware acceleration */
+    /* Disable all browser suggestions */
+    -webkit-autocomplete: off !important;
+    -moz-autocomplete: off !important;
+    autocomplete: off !important;
+    -webkit-text-security: none !important;
+    /* Prevent iOS zoom */
+    font-size: 16px !important;
+    /* Prevent scroll behavior */
+    scroll-behavior: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  
+  /* Prevent page scrolling when input is focused */
+  body:has(#mobile-binary-input:focus) {
+    position: fixed;
+    width: 100%;
+    overflow: hidden;
+  }
+  
+  /* Prevent automatic scroll restoration */
+  html {
+    scroll-behavior: auto !important;
+  }
+  
+  body {
+    scroll-behavior: auto !important;
+    overflow-x: hidden;
+  }
+  
+  /* Improve touch targets */
+  .dropdown-button {
+    min-height: 44px; /* iOS recommended touch target size */
+  }
+  
+  .reset-btn {
+    min-height: 44px;
+  }
+  
+  .help-button {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .hide-predictions-checkbox {
+    width: 20px;
+    height: 20px;
+  }
+  
+  /* Better spacing for mobile */
+  .game-layout {
+    gap: 20px;
+  }
+  
+  .grid-section {
+    margin-bottom: 20px;
+  }
+  
+  .history-display {
+    padding: 15px;
+    min-height: 120px;
+  }
+  
+  /* Improve readability */
+  .history-label {
+    font-weight: 600;
+  }
+  
+  .progress-text {
+    font-weight: 600;
   }
 }
 
@@ -2280,6 +2555,10 @@ body {
 
 /* Game Page Responsive Design */
 @media (max-width: 768px) {
+  .game-main {
+    padding: 10px;
+  }
+  
   .top-section {
     grid-template-columns: 1fr;
     gap: 20px;
@@ -2296,14 +2575,57 @@ body {
   
   .game-stats-card {
     width: 100%; /* Full width on mobile */
+    height: auto;
+    min-height: 120px;
   }
   
   .game-graph-card {
     width: 100%;
+    height: 200px; /* Taller on mobile for better visibility */
+  }
+  
+  .chart-container {
+    height: 160px; /* Adjusted for taller card */
   }
   
   .game-method-controls {
     width: 100%;
+  }
+  
+  .method-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+  
+  .method-controls-group {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  
+  .custom-dropdown {
+    width: 100%;
+  }
+  
+  .dropdown-button {
+    width: 100%;
+    padding: 12px 15px;
+    font-size: 1rem;
+  }
+  
+  .hide-predictions-option {
+    align-self: flex-start;
+  }
+  
+  .start-over-container {
+    align-self: flex-start;
+  }
+  
+  .reset-btn {
+    padding: 15px 25px;
+    font-size: 1.1rem;
+    min-width: 120px;
   }
   
   .input-prediction-row {
@@ -2317,9 +2639,9 @@ body {
   }
   
   .single-digit-input, .prediction-display {
-    width: 60px;
-    height: 60px;
-    font-size: 2rem;
+    width: 70px;
+    height: 70px;
+    font-size: 2.2rem;
   }
   
   .help-button-container {
@@ -2330,10 +2652,11 @@ body {
   }
   
   .help-tooltip {
-    width: 280px;
+    width: 300px;
     left: 50%;
     right: auto;
     transform: translateX(-50%) translateY(-10px);
+    padding: 25px;
   }
   
   .help-button:hover .help-tooltip {
@@ -2344,5 +2667,158 @@ body {
     left: 50%;
     right: auto;
     transform: translateX(-50%);
+  }
+  
+  /* Mobile-specific grid optimizations */
+  .history-digits {
+    grid-template-columns: repeat(25, 1fr);
+    gap: 2px;
+  }
+  
+  .grid-cell {
+    width: auto;
+    height: 24px;
+    font-size: 0.7rem;
+    min-width: 20px;
+  }
+  
+  .history-label {
+    font-size: 0.7rem;
+    width: 60px;
+  }
+  
+  .history-spacer {
+    width: 10px;
+  }
+  
+  .progress-text {
+    font-size: 0.8rem;
+  }
+  
+  .progress-bar {
+    height: 10px;
+  }
+  
+  /* Mobile verdict optimizations */
+  .verdict-card {
+    padding: 30px 20px;
+    margin: 20px 10px;
+  }
+  
+  .verdict-main-text {
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    text-align: center;
+  }
+  
+  .verdict-prompt {
+    font-size: 1.5rem;
+    margin-top: 0;
+  }
+  
+  .verdict-label {
+    font-size: 2.2rem;
+    padding: 12px 20px;
+  }
+  
+  .verdict-tagline {
+    font-size: 1.1rem;
+    margin-top: 30px;
+    margin-bottom: 25px;
+  }
+  
+  .verdict-explanation {
+    font-size: 1rem;
+    line-height: 1.5;
+  }
+}
+
+/* Extra small mobile devices */
+@media (max-width: 480px) {
+  .game-main {
+    padding: 5px;
+  }
+  
+  .history-digits {
+    grid-template-columns: repeat(20, 1fr);
+    gap: 1px;
+  }
+  
+  .grid-cell {
+    height: 22px;
+    font-size: 0.65rem;
+    min-width: 18px;
+  }
+  
+  .history-label {
+    font-size: 0.65rem;
+    width: 50px;
+  }
+  
+  .history-spacer {
+    width: 8px;
+  }
+  
+  .single-digit-input, .prediction-display {
+    width: 60px;
+    height: 60px;
+    font-size: 2rem;
+  }
+  
+  .help-tooltip {
+    width: 280px;
+    padding: 20px;
+  }
+  
+  .verdict-card {
+    padding: 25px 15px;
+    margin: 15px 5px;
+  }
+  
+  .verdict-prompt {
+    font-size: 1.3rem;
+  }
+  
+  .verdict-label {
+    font-size: 1.8rem;
+    padding: 10px 16px;
+  }
+  
+  .verdict-tagline {
+    font-size: 1rem;
+    margin-top: 25px;
+    margin-bottom: 20px;
+  }
+  
+  .verdict-explanation {
+    font-size: 0.9rem;
+  }
+  
+  .game-stats-card {
+    padding: 15px;
+  }
+  
+  .game-graph-card {
+    padding: 15px;
+    height: 180px;
+  }
+  
+  .chart-container {
+    height: 140px;
+  }
+  
+  .game-stat-row {
+    padding: 4px 0;
+  }
+  
+  .game-stat-label {
+    font-size: 0.8rem;
+    flex: 0 0 100px;
+  }
+  
+  .game-stat-number {
+    font-size: 1rem;
+    flex: 0 0 40px;
   }
 }
